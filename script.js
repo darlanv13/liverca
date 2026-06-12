@@ -216,17 +216,33 @@ function editarNo(id) {
 function renderizarArvore() {
     const container = document.getElementById('arvore-container'); container.innerHTML = '';
     function criarHTML(nos) {
-        let html = '';
+        if (nos.length === 0) return '';
+        let html = '<ul>';
         for (let no of nos) {
             const tipoClasse = no.tipo ? `tipo-${no.tipo}` : 'tipo-evento';
-            html += `<div class="tree-node"><div class="node-content ${tipoClasse}">
-                        <span class="node-text" onclick="editarNo('${no.id}')">${no.texto}</span>
-                        <button class="btn-small no-print" style="color:#333;" onclick="adicionarSubcausa('${no.id}')">+ Nó</button>
-                    </div>${no.filhos.length > 0 ? criarHTML(no.filhos) : ''}</div>`;
+
+            // Text logic tag based on node type
+            let tagTexto = 'EVENTO';
+            if(no.tipo === 'hipotese') tagTexto = 'HIPÓTESE';
+            if(no.tipo === 'validada') tagTexto = 'VALIDADO';
+            if(no.tipo === 'raiz') tagTexto = 'CAUSA RAIZ';
+
+            html += `<li>
+                        <div class="node-content ${tipoClasse}">
+                            <span class="logic-tag">${tagTexto}</span>
+                            <span class="node-text" onclick="editarNo('${no.id}')">${no.texto}</span>
+                            <button class="btn-small no-print" style="color:#333;" onclick="adicionarSubcausa('${no.id}')">+ Nó</button>
+                        </div>
+                        ${no.filhos.length > 0 ? criarHTML(no.filhos) : ''}
+                    </li>`;
         }
+        html += '</ul>';
         return html;
     }
-    container.innerHTML = criarHTML(estado.arvore);
+
+    if (estado.arvore.length > 0) {
+        container.innerHTML = `<div class="oc-tree">${criarHTML(estado.arvore)}</div>`;
+    }
 }
 
 function adicionarPorque() {
