@@ -437,6 +437,16 @@ th {
     white-space: pre-wrap; /* important for textareas */
 }
 
+.pdf-checkbox {
+    font-size: 0.95rem;
+    font-weight: bold;
+    padding: 8px;
+    border-radius: 4px;
+    display: inline-block;
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
 /* --- Sistema de Abas --- */
 .tabs-container {
     display: flex;
@@ -873,6 +883,36 @@ th {
 
 .pdf-mode-global .sidebar {
     display: none !important;
+}
+
+/* --- Progress Bar Plan de Ação --- */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 250px;
+}
+
+.progress-bar-bg {
+    flex-grow: 1;
+    height: 10px;
+    background-color: #e2e8f0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: #10b981;
+    transition: width 0.4s ease;
+}
+
+.progress-text {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #475569;
+    min-width: 95px;
+    text-align: right;
 }
 
 /* --- Tabela 5W2H Otimizada --- */

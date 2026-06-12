@@ -1,7 +1,7 @@
 // === Estado da Aplicação Atualizado (5W2H e Config) ===
 let estado = {
     config: { empresa: 'Vale S/A', logoBase64: '' },
-    dadosIniciais: { titulo: '', area: '', data: '', probabilidade: '', severidade: '', risco: 'Não Avaliado', sistema: '', downtime: '', impacto: '', ttd: '', ttr: '' },
+    dadosIniciais: { titulo: '', area: '', data: '', probabilidade: '', severidade: '', risco: 'Não Avaliado', sistema: '', downtime: '', impacto: '', ttd: '', ttr: '', classificacao: '', violacaoSla: false, resumo: '' },
     arvore: [], cincoPorques: [], ishikawa: { metodo: [], maquina: [], material: [], mao: [], medida: [], meio: [] }, barreiras: [], timeline: [],
     acoes: [], participantes: [], fotos: [], postmortem: { funcionou: '', falhou: '' }
 };
@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 estado.dadosIniciais.impacto = '';
                 estado.dadosIniciais.ttd = '';
                 estado.dadosIniciais.ttr = '';
+                estado.dadosIniciais.classificacao = '';
+                estado.dadosIniciais.violacaoSla = false;
+                estado.dadosIniciais.resumo = '';
             }
 
             document.getElementById('status-save').textContent = 'Rascunho recuperado do Banco Offline.';
@@ -51,6 +54,9 @@ async function salvarEstado() {
     estado.dadosIniciais.impacto = document.getElementById('impacto').value;
     estado.dadosIniciais.ttd = document.getElementById('ttd').value;
     estado.dadosIniciais.ttr = document.getElementById('ttr').value;
+    estado.dadosIniciais.classificacao = document.getElementById('classificacao').value;
+    estado.dadosIniciais.violacaoSla = document.getElementById('violacao-sla').checked;
+    estado.dadosIniciais.resumo = document.getElementById('resumo-executivo').value;
     estado.postmortem.funcionou = document.getElementById('pm-funcionou').value;
     estado.postmortem.falhou = document.getElementById('pm-falhou').value;
 
@@ -391,6 +397,21 @@ function adicionarAcao() {
 
 function removerAcao(index) { estado.acoes.splice(index, 1); renderizarAcoes(); salvarEstado(); }
 
+function atualizarProgressoAcoes() {
+    const total = estado.acoes.length;
+    if (total === 0) {
+        document.getElementById('progresso-texto').textContent = '0% Concluído';
+        document.getElementById('progresso-fill').style.width = '0%';
+        return;
+    }
+
+    const concluidas = estado.acoes.filter(a => a.status === 'Concluído').length;
+    const porcentagem = Math.round((concluidas / total) * 100);
+
+    document.getElementById('progresso-texto').textContent = `${porcentagem}% Concluído`;
+    document.getElementById('progresso-fill').style.width = `${porcentagem}%`;
+}
+
 function renderizarAcoes() {
     const tbody = document.querySelector('#tabela-acoes tbody'); tbody.innerHTML = '';
     estado.acoes.forEach((a, index) => {
@@ -415,6 +436,7 @@ function renderizarAcoes() {
             <td class="no-print"><button class="btn-danger btn-small" onclick="removerAcao(${index})">X</button></td>
         </tr>`;
     });
+    atualizarProgressoAcoes();
 }
 
 // === Participantes ===
@@ -478,6 +500,9 @@ function restaurarInterface() {
     document.getElementById('impacto').value = estado.dadosIniciais.impacto || '';
     document.getElementById('ttd').value = estado.dadosIniciais.ttd || '';
     document.getElementById('ttr').value = estado.dadosIniciais.ttr || '';
+    document.getElementById('classificacao').value = estado.dadosIniciais.classificacao || '';
+    document.getElementById('violacao-sla').checked = estado.dadosIniciais.violacaoSla || false;
+    document.getElementById('resumo-executivo').value = estado.dadosIniciais.resumo || '';
     document.getElementById('pm-funcionou').value = estado.postmortem?.funcionou || '';
     document.getElementById('pm-falhou').value = estado.postmortem?.falhou || '';
 
@@ -521,11 +546,19 @@ document.getElementById('btn-pdf').addEventListener('click', () => {
     });
 
     // Converte inputs para texto limpo
-    const inputs = document.querySelectorAll('input[type="text"], input[type="date"], select, textarea');
+    const inputs = document.querySelectorAll('input[type="text"], input[type="date"], select, textarea, input[type="checkbox"]');
     inputs.forEach(input => {
         if (input.id && input.style.display !== 'none' && !input.closest('.no-print')) {
-            const span = document.createElement('span'); span.className = 'pdf-text';
-            span.textContent = input.options ? input.options[input.selectedIndex].text : input.value;
+            const span = document.createElement('span');
+
+            if (input.type === 'checkbox') {
+                span.className = 'pdf-checkbox';
+                span.textContent = input.checked ? '☑ Sim' : '☐ Não';
+            } else {
+                span.className = 'pdf-text';
+                span.textContent = input.options ? input.options[input.selectedIndex].text : input.value;
+            }
+
             span.id = 'span_' + input.id; input.style.display = 'none';
             input.parentNode.insertBefore(span, input.nextSibling);
         }

@@ -146,6 +146,29 @@
                         <label title="Time to Resolve">Tempo de Resolução (TTR):</label>
                         <input type="text" id="ttr" placeholder="Ex: 1h 45m" oninput="salvarEstado()">
                     </div>
+                    <div class="input-wrapper">
+                        <label>Classificação Principal:</label>
+                        <select id="classificacao" onchange="salvarEstado()">
+                            <option value="">Selecione...</option>
+                            <option value="Software/Bug">Software / Bug</option>
+                            <option value="Hardware">Hardware / Equipamento</option>
+                            <option value="Rede/Conectividade">Rede / Conectividade</option>
+                            <option value="Processo/Humano">Erro Humano / Processo</option>
+                            <option value="Fornecedor/Terceiro">Fornecedor / Terceiro</option>
+                        </select>
+                    </div>
+                    <div class="input-wrapper" style="justify-content: center;">
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="violacao-sla" onchange="salvarEstado()" style="width: auto;">
+                            <strong>Violação de SLA / SLO Ocorreu</strong>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group row" style="margin-top: 15px;">
+                    <div class="input-wrapper" style="width: 100%;">
+                        <label>Resumo Executivo do Incidente:</label>
+                        <textarea id="resumo-executivo" rows="3" placeholder="Descreva brevemente o que aconteceu, impacto e resolução..." oninput="salvarEstado()"></textarea>
+                    </div>
                 </div>
             </section>
 
@@ -248,7 +271,15 @@
             </section>
 
             <section class="card">
-                <h3>3. Plano de Ação Estruturado (5W2H)</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>3. Plano de Ação Estruturado (5W2H)</h3>
+                    <div class="progress-container">
+                        <span class="progress-text" id="progresso-texto">0% Concluído</span>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progresso-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group row no-print">
                     <input type="text" id="acao-oque" placeholder="What: O que será feito?">
                     <input type="text" id="acao-porque" placeholder="Why: Por que? (Justificativa)">
