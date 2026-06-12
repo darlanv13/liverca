@@ -137,6 +137,16 @@
                         <input type="text" id="impacto" placeholder="Ex: Parada de produção" oninput="salvarEstado()">
                     </div>
                 </div>
+                <div class="form-group row" style="margin-top: 15px;">
+                    <div class="input-wrapper">
+                        <label title="Time to Detect">Tempo de Detecção (TTD):</label>
+                        <input type="text" id="ttd" placeholder="Ex: 15 minutos" oninput="salvarEstado()">
+                    </div>
+                    <div class="input-wrapper">
+                        <label title="Time to Resolve">Tempo de Resolução (TTR):</label>
+                        <input type="text" id="ttr" placeholder="Ex: 1h 45m" oninput="salvarEstado()">
+                    </div>
+                </div>
             </section>
 
             <section class="card" id="secao-metodologias">
@@ -147,6 +157,7 @@
                     <button class="tab-btn active" onclick="abrirAba(event, 'aba-arvore')">Árvore de Causas</button>
                     <button class="tab-btn" onclick="abrirAba(event, 'aba-5pq')">5 Porquês</button>
                     <button class="tab-btn" onclick="abrirAba(event, 'aba-ishikawa')">Ishikawa</button>
+                    <button class="tab-btn" onclick="abrirAba(event, 'aba-barreiras')">Barreiras</button>
                     <button class="tab-btn" onclick="abrirAba(event, 'aba-timeline')">Timeline</button>
                 </div>
                 <div id="aba-arvore" class="tab-content" style="display: block;">
@@ -210,6 +221,20 @@
                         </div>
                     </div>
                 </div>
+                <div id="aba-barreiras" class="tab-content" style="display: none;">
+                    <h4 class="metodologia-titulo">▶ Análise de Barreiras</h4>
+                    <p style="font-size: 0.9rem; color: #475569;">Identifique quais controles de proteção, detecção ou mitigação existiam e como se comportaram no incidente.</p>
+                    <div class="form-group row no-print">
+                        <input type="text" id="barreira-nome" placeholder="Nome da Barreira (Ex: Alerta Zabbix, Firewall, Code Review)" style="flex-grow: 2;">
+                        <select id="barreira-status">
+                            <option value="Funcionou">🛡️ Funcionou (Mitigou)</option>
+                            <option value="Falhou">⚠️ Falhou</option>
+                            <option value="Inexistente">❌ Inexistente</option>
+                        </select>
+                        <button onclick="adicionarBarreira()">Adicionar Barreira</button>
+                    </div>
+                    <div id="lista-barreiras" class="barreiras-grid"></div>
+                </div>
                 <div id="aba-timeline" class="tab-content" style="display: none;">
                     <h4 class="metodologia-titulo">▶ Cronologia do Incidente (Timeline)</h4>
                     <div class="form-group row no-print">
@@ -236,6 +261,12 @@
                 <div class="form-group row no-print">
                     <input type="text" id="acao-como" placeholder="How: Como será executado?">
                     <input type="text" id="acao-quanto" placeholder="How Much: Quanto custa/recursos?">
+                    <select id="acao-categoria">
+                        <option value="Corretiva">Corretiva</option>
+                        <option value="Preventiva">Preventiva</option>
+                        <option value="Detetiva">Detetiva</option>
+                        <option value="Melhoria">Melhoria</option>
+                    </select>
                     <select id="acao-status">
                         <option value="A Fazer">A Fazer</option>
                         <option value="Em Andamento">Em Andamento</option>
@@ -249,7 +280,7 @@
                             <th>Ação & Justificativa <br><small>(What / Why)</small></th>
                             <th>Responsável <br><small>(Who)</small></th>
                             <th>Local & Prazo <br><small>(Where / When)</small></th>
-                            <th>Procedimento & Custo <br><small>(How / How Much)</small></th>
+                            <th>Procedimento & Categoria <br><small>(How / Cat.)</small></th>
                             <th>Status</th>
                             <th class="no-print">Ação</th>
                         </tr>

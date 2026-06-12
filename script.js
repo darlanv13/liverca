@@ -1,8 +1,8 @@
 // === Estado da Aplicação Atualizado (5W2H e Config) ===
 let estado = {
     config: { empresa: 'Vale S/A', logoBase64: '' },
-    dadosIniciais: { titulo: '', area: '', data: '', probabilidade: '', severidade: '', risco: 'Não Avaliado', sistema: '', downtime: '', impacto: '' },
-    arvore: [], cincoPorques: [], ishikawa: { metodo: [], maquina: [], material: [], mao: [], medida: [], meio: [] }, timeline: [],
+    dadosIniciais: { titulo: '', area: '', data: '', probabilidade: '', severidade: '', risco: 'Não Avaliado', sistema: '', downtime: '', impacto: '', ttd: '', ttr: '' },
+    arvore: [], cincoPorques: [], ishikawa: { metodo: [], maquina: [], material: [], mao: [], medida: [], meio: [] }, barreiras: [], timeline: [],
     acoes: [], participantes: [], fotos: [], postmortem: { funcionou: '', falhou: '' }
 };
 
@@ -16,12 +16,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!estado.config) estado.config = { empresa: 'Vale S/A', logoBase64: '' };
             if (!estado.cincoPorques) estado.cincoPorques = [];
             if (!estado.ishikawa) estado.ishikawa = { metodo: [], maquina: [], material: [], mao: [], medida: [], meio: [] };
+            if (!estado.barreiras) estado.barreiras = [];
             if (!estado.timeline) estado.timeline = [];
             if (!estado.postmortem) estado.postmortem = { funcionou: '', falhou: '' };
             if (estado.dadosIniciais.sistema === undefined) {
                 estado.dadosIniciais.sistema = '';
                 estado.dadosIniciais.downtime = '';
                 estado.dadosIniciais.impacto = '';
+                estado.dadosIniciais.ttd = '';
+                estado.dadosIniciais.ttr = '';
             }
 
             document.getElementById('status-save').textContent = 'Rascunho recuperado do Banco Offline.';
@@ -46,6 +49,8 @@ async function salvarEstado() {
     estado.dadosIniciais.sistema = document.getElementById('sistema').value;
     estado.dadosIniciais.downtime = document.getElementById('downtime').value;
     estado.dadosIniciais.impacto = document.getElementById('impacto').value;
+    estado.dadosIniciais.ttd = document.getElementById('ttd').value;
+    estado.dadosIniciais.ttr = document.getElementById('ttr').value;
     estado.postmortem.funcionou = document.getElementById('pm-funcionou').value;
     estado.postmortem.falhou = document.getElementById('pm-falhou').value;
 
@@ -263,6 +268,49 @@ function renderizarIshikawa() {
     });
 }
 
+// === Barreiras ===
+function adicionarBarreira() {
+    const nome = document.getElementById('barreira-nome').value;
+    const status = document.getElementById('barreira-status').value;
+
+    if (!nome.trim()) return alert('Preencha o nome da barreira.');
+
+    estado.barreiras.push({ nome: nome.trim(), status });
+    document.getElementById('barreira-nome').value = '';
+    renderizarBarreiras(); salvarEstado();
+}
+
+function removerBarreira(index) { estado.barreiras.splice(index, 1); renderizarBarreiras(); salvarEstado(); }
+
+function renderizarBarreiras() {
+    const container = document.getElementById('lista-barreiras');
+    container.innerHTML = '';
+    estado.barreiras.forEach((barreira, index) => {
+        let badge = '';
+        let classeCard = 'barreira-inexistente';
+
+        if (barreira.status === 'Funcionou') {
+            badge = '🛡️ Mitigou/Funcionou';
+            classeCard = 'barreira-funcionou';
+        } else if (barreira.status === 'Falhou') {
+            badge = '⚠️ Falhou';
+            classeCard = 'barreira-falhou';
+        } else {
+            badge = '❌ Inexistente';
+        }
+
+        container.innerHTML += `
+            <div class="barreira-card ${classeCard}">
+                <div class="barreira-info">
+                    <strong>${barreira.nome}</strong>
+                    <span>Status: ${badge}</span>
+                </div>
+                <button class="btn-danger btn-small no-print" onclick="removerBarreira(${index})">X</button>
+            </div>
+        `;
+    });
+}
+
 // === Timeline ===
 function adicionarTimeline() {
     const data = document.getElementById('timeline-data').value;
@@ -312,13 +360,15 @@ function adicionarAcao() {
     const quem = document.getElementById('acao-quem').value; const quando = document.getElementById('acao-quando').value;
     const onde = document.getElementById('acao-onde').value; const como = document.getElementById('acao-como').value;
     const quanto = document.getElementById('acao-quanto').value;
+    const categoria = document.getElementById('acao-categoria').value;
     const status = document.getElementById('acao-status').value;
 
     if (!oque || !quem || !quando) return alert("Preencha ao menos O Que, Quem e Quando!");
 
-    estado.acoes.push({ oque, porque, quem, quando, onde, como, quanto, status });
+    estado.acoes.push({ oque, porque, quem, quando, onde, como, quanto, categoria, status });
 
     document.querySelectorAll('input[id^="acao-"]').forEach(inp => inp.value = '');
+    document.getElementById('acao-categoria').value = 'Corretiva';
     document.getElementById('acao-status').value = 'A Fazer';
     renderizarAcoes(); salvarEstado();
 }
@@ -332,12 +382,19 @@ function renderizarAcoes() {
         if (a.status === 'Em Andamento') badgeClass = 'status-doing';
         else if (a.status === 'Concluído') badgeClass = 'status-done';
 
+        let catClass = 'cat-corretiva';
+        if (a.categoria === 'Preventiva') catClass = 'cat-preventiva';
+        else if (a.categoria === 'Detetiva') catClass = 'cat-detetiva';
+        else if (a.categoria === 'Melhoria') catClass = 'cat-melhoria';
+
+        const catBadgeHTML = a.categoria ? `<br><span class="cat-badge ${catClass}">${a.categoria}</span>` : '';
+
         // Agrupamento lógico para caber no PDF Retrato
         tbody.innerHTML += `<tr>
             <td>${a.oque} <span class="info-sub"><strong>Por que:</strong> ${a.porque || 'N/A'}</span></td>
             <td>${a.quem}</td>
             <td>${a.quando} <span class="info-sub"><strong>Onde:</strong> ${a.onde || 'N/A'}</span></td>
-            <td>${a.como || 'N/A'} <span class="info-sub"><strong>Custo:</strong> ${a.quanto || 'N/A'}</span></td>
+            <td>${a.como || 'N/A'} ${catBadgeHTML} <span class="info-sub"><strong>Custo:</strong> ${a.quanto || 'N/A'}</span></td>
             <td><span class="status-badge ${badgeClass}">${a.status || 'A Fazer'}</span></td>
             <td class="no-print"><button class="btn-danger btn-small" onclick="removerAcao(${index})">X</button></td>
         </tr>`;
@@ -403,16 +460,18 @@ function restaurarInterface() {
     document.getElementById('sistema').value = estado.dadosIniciais.sistema || '';
     document.getElementById('downtime').value = estado.dadosIniciais.downtime || '';
     document.getElementById('impacto').value = estado.dadosIniciais.impacto || '';
+    document.getElementById('ttd').value = estado.dadosIniciais.ttd || '';
+    document.getElementById('ttr').value = estado.dadosIniciais.ttr || '';
     document.getElementById('pm-funcionou').value = estado.postmortem?.funcionou || '';
     document.getElementById('pm-falhou').value = estado.postmortem?.falhou || '';
 
     calcularRisco(); atualizarCabecalho(); renderizarArvore(); renderizarPorques();
-    renderizarIshikawa(); renderizarTimeline(); renderizarAcoes(); renderizarParticipantes(); renderizarFotos();
+    renderizarIshikawa(); renderizarBarreiras(); renderizarTimeline(); renderizarAcoes(); renderizarParticipantes(); renderizarFotos();
 }
 
 function validarEstado() {
     const dadosOk = estado.dadosIniciais.titulo && estado.dadosIniciais.area && estado.dadosIniciais.data && estado.dadosIniciais.probabilidade && estado.dadosIniciais.severidade;
-    const metodosOk = estado.arvore.length > 0 || estado.cincoPorques.length > 0 || Object.values(estado.ishikawa).some(arr => arr.length > 0) || (estado.timeline && estado.timeline.length > 0);
+    const metodosOk = estado.arvore.length > 0 || estado.cincoPorques.length > 0 || Object.values(estado.ishikawa).some(arr => arr.length > 0) || (estado.timeline && estado.timeline.length > 0) || (estado.barreiras && estado.barreiras.length > 0);
     const acaoOk = estado.acoes.length > 0; const presencaOk = estado.participantes.length > 0;
 
     document.getElementById('check-dados').className = dadosOk ? 'ok' : 'pending';
@@ -441,7 +500,8 @@ document.getElementById('btn-pdf').addEventListener('click', () => {
         const tem5PQ = tab.id === 'aba-5pq' && estado.cincoPorques.length > 0;
         const temIshikawa = tab.id === 'aba-ishikawa' && Object.values(estado.ishikawa).some(arr => arr.length > 0);
         const temTimeline = tab.id === 'aba-timeline' && estado.timeline && estado.timeline.length > 0;
-        tab.style.display = (temArvore || tem5PQ || temIshikawa || temTimeline) ? 'block' : 'none';
+        const temBarreiras = tab.id === 'aba-barreiras' && estado.barreiras && estado.barreiras.length > 0;
+        tab.style.display = (temArvore || tem5PQ || temIshikawa || temTimeline || temBarreiras) ? 'block' : 'none';
     });
 
     // Converte inputs para texto limpo
