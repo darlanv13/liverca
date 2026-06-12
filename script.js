@@ -204,6 +204,35 @@ function iterarArvore(nos, idBusca, callback) {
     return false;
 }
 
+function removerNo(id) {
+    if (!confirm("Tem certeza que deseja remover este nó e todos os seus dependentes?")) return;
+
+    // Se for o nó topo (raiz do array arvore)
+    const indexTopo = estado.arvore.findIndex(no => no.id === id);
+    if (indexTopo !== -1) {
+        estado.arvore.splice(indexTopo, 1);
+        renderizarArvore();
+        salvarEstado();
+        return;
+    }
+
+    // Busca pai para remover filho
+    function encontrarERemover(nos) {
+        for (let i = 0; i < nos.length; i++) {
+            const indexFilho = nos[i].filhos.findIndex(filho => filho.id === id);
+            if (indexFilho !== -1) {
+                nos[i].filhos.splice(indexFilho, 1);
+                return true;
+            }
+            if (nos[i].filhos.length > 0 && encontrarERemover(nos[i].filhos)) return true;
+        }
+        return false;
+    }
+
+    encontrarERemover(estado.arvore);
+    renderizarArvore(); salvarEstado();
+}
+
 function adicionarSubcausa(idPai, tipoPredefinido) {
     const texto = prompt(`Adicionando [${tipoPredefinido.toUpperCase()}]. Descreva o item:`);
     if (!texto) return;
@@ -263,6 +292,8 @@ function renderizarArvore() {
                 tagTexto = 'CAUSA RAIZ';
                 // Final node, no actions
             }
+
+            botoesAcao += `<button class="btn-danger btn-small no-print" onclick="removerNo('${no.id}')">X</button>`;
 
             html += `<li>
                         <div class="node-content ${tipoClasse}">
