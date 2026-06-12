@@ -1,0 +1,653 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    margin: 0;
+    background-color: #e9ecef;
+    color: #212529;
+}
+
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 320px;
+    background-color: #1e293b;
+    color: white;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.sidebar h2 {
+    font-size: 1.1rem;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 8px;
+    margin-top: 0;
+}
+
+#checklist {
+    list-style: none;
+    padding: 0;
+    flex-grow: 1;
+}
+
+#checklist li {
+    padding: 10px 0;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    transition: 0.3s;
+}
+
+#checklist li::before {
+    content: '⏳';
+    margin-right: 10px;
+}
+
+#checklist li.ok::before {
+    content: '✅';
+}
+
+#checklist li.ok {
+    color: #4ade80;
+}
+
+.acoes-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+button {
+    padding: 10px 15px;
+    background-color: #0284c7;
+    color: white;
+    border: none;
+    font-size: 0.95rem;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+button:hover {
+    background-color: #0369a1;
+}
+
+.btn-secundary {
+    background-color: #475569;
+}
+
+.btn-secundary:hover {
+    background-color: #334155;
+}
+
+#btn-pdf {
+    background-color: #16a34a;
+    font-size: 1.05rem;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+#btn-pdf:disabled {
+    background-color: #64748b;
+    cursor: not-allowed;
+}
+
+.btn-danger {
+    background-color: #dc2626;
+}
+
+.btn-danger:hover {
+    background-color: #b91c1c;
+}
+
+.btn-small {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+    margin-left: 8px;
+    background-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.btn-small:hover {
+    background-color: #94a3b8;
+}
+
+.status-save {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.content {
+    flex-grow: 1;
+    padding: 30px;
+    overflow-y: auto;
+    background: white;
+    margin: 15px;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    margin-top: 0;
+    color: #0f172a;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 15px;
+}
+
+.card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 25px;
+    background: #f8fafc;
+}
+
+.card h3 {
+    margin-top: 0;
+    color: #0284c7;
+    font-size: 1.1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group.row {
+    flex-direction: row;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.input-wrapper {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 5px;
+    min-width: 200px;
+}
+
+.input-wrapper label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+input,
+select {
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+    background-color: white;
+}
+
+select {
+    cursor: pointer;
+}
+
+/* Risk Matrix Badge */
+.risk-badge {
+    padding: 10px;
+    text-align: center;
+    border-radius: 6px;
+    font-weight: bold;
+    color: white;
+    background-color: #94a3b8;
+}
+
+.risk-baixo {
+    background-color: #22c55e;
+}
+
+.risk-medio {
+    background-color: #eab308;
+    color: #451a03;
+}
+
+.risk-alto {
+    background-color: #f97316;
+}
+
+.risk-critico {
+    background-color: #ef4444;
+}
+
+.tree-container {
+    margin-top: 15px;
+}
+
+.tree-node {
+    margin-left: 20px;
+    padding-left: 15px;
+    border-left: 2px solid #cbd5e1;
+    position: relative;
+    margin-top: 10px;
+}
+
+.tree-node::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 15px;
+    width: 10px;
+    border-top: 2px solid #cbd5e1;
+}
+
+.node-content {
+    display: flex;
+    align-items: center;
+    background: white;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.node-text {
+    flex-grow: 1;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.node-text:hover {
+    color: #0284c7;
+    text-decoration: underline;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    background: white;
+}
+
+th,
+td {
+    border: 1px solid #e2e8f0;
+    padding: 10px;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+th {
+    background-color: #f1f5f9;
+    color: #334155;
+    font-weight: 600;
+}
+
+.tags-list {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+}
+
+.tags-list li {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.upload-btn {
+    display: inline-block;
+    padding: 10px 15px;
+    background: #f1f5f9;
+    border: 1px dashed #94a3b8;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #475569;
+}
+
+.gallery {
+    display: flex;
+    gap: 15px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.gallery img {
+    width: 200px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+}
+
+.pdf-text {
+    font-size: 0.95rem;
+    color: #0f172a;
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e8f0;
+    min-height: 38px;
+    display: inline-block;
+    width: 100%;
+}
+
+/* --- Sistema de Abas --- */
+.tabs-container {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.tab-btn {
+    background-color: #f1f5f9;
+    color: #475569;
+    border-radius: 6px 6px 0 0;
+    padding: 10px 20px;
+    box-shadow: none;
+}
+
+.tab-btn:hover {
+    background-color: #e2e8f0;
+}
+
+.tab-btn.active {
+    background-color: #0284c7;
+    color: white;
+}
+
+.metodologia-titulo {
+    color: #0f172a;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 5px;
+    margin-top: 0;
+}
+
+/* --- Árvore de Causas (Fluxograma Colorido) --- */
+.tipo-select {
+    max-width: 250px;
+    font-weight: bold;
+}
+
+.legenda-cores {
+    display: flex;
+    gap: 10px;
+    margin: 10px 0;
+    font-size: 0.85rem;
+}
+
+.legenda-cores span {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.node-content {
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    color: #111;
+}
+
+/* Cores Específicas do Fluxograma */
+.tipo-evento {
+    background-color: #ffbf00 !important;
+}
+
+/* Âmbar */
+.tipo-hipotese {
+    background-color: #fef08a !important;
+}
+
+/* Amarelo */
+.tipo-validada {
+    background-color: #bbf7d0 !important;
+}
+
+/* Verde Claro */
+.tipo-raiz {
+    background-color: #f87171 !important;
+    color: white !important;
+}
+
+/* Vermelho */
+
+.badge-evento {
+    background-color: #ffbf00;
+}
+
+.badge-hipotese {
+    background-color: #fef08a;
+}
+
+.badge-validada {
+    background-color: #bbf7d0;
+}
+
+.badge-raiz {
+    background-color: #f87171;
+    color: white;
+}
+
+/* --- 5 Porquês --- */
+.lista-porques {
+    list-style: none;
+    padding: 0;
+    counter-reset: pq-counter;
+}
+
+.lista-porques li {
+    padding: 10px;
+    background: #f8fafc;
+    border-left: 4px solid #0284c7;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.lista-porques li::before {
+    counter-increment: pq-counter;
+    content: counter(pq-counter) "º PQ: ";
+    font-weight: bold;
+    margin-right: 10px;
+    color: #0284c7;
+}
+
+/* --- Ishikawa --- */
+.ishikawa-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.ishikawa-box {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 10px;
+    background: #f1f5f9;
+}
+
+.ishikawa-box h5 {
+    margin: 0 0 10px 0;
+    color: #334155;
+    text-align: center;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 5px;
+}
+
+.ishikawa-box ul {
+    padding-left: 20px;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.ishikawa-box li {
+    margin-bottom: 5px;
+}
+
+/* --- Ocultar títulos das abas no modo normal, mostrar no PDF --- */
+.metodologia-titulo {
+    display: none;
+}
+
+.pdf-mode .metodologia-titulo {
+    display: block;
+    margin-top: 20px;
+    font-size: 1.2rem;
+    color: #0284c7;
+}
+
+.pdf-mode .tab-content {
+    margin-bottom: 30px;
+    border-bottom: 2px dashed #ccc;
+    padding-bottom: 20px;
+}
+
+/* --- Cards de Evidências Fotográficas --- */
+.gallery {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.evidence-card {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 12px;
+    background: white;
+    width: calc(50% - 10px);
+    /* 2 fotos por linha */
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    page-break-inside: avoid;
+    /* Evita que o PDF corte a foto pela metade */
+}
+
+.evidence-card img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.evidence-info {
+    flex-grow: 1;
+}
+
+.evidence-info h4 {
+    margin: 0 0 5px 0;
+    color: #0f172a;
+    font-size: 1.05rem;
+}
+
+.evidence-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #475569;
+    line-height: 1.4;
+}
+
+/* Ajuste no modo PDF para as fotos ocuparem bem o espaço */
+.pdf-mode .evidence-card {
+    border-color: #e2e8f0;
+    box-shadow: none;
+    width: calc(50% - 15px);
+}
+
+/* --- Cabeçalho Corporativo --- */
+.pdf-header {
+    display: none;
+    padding-bottom: 20px;
+    margin-bottom: 25px;
+    border-bottom: 3px solid #0284c7;
+}
+
+.logo-container {
+    width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-container img {
+    max-width: 100%;
+    max-height: 60px;
+    object-fit: contain;
+}
+
+.header-text {
+    flex-grow: 1;
+    text-align: center;
+}
+
+.header-text h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.header-text p {
+    margin: 5px 0 0 0;
+    color: #475569;
+    font-weight: bold;
+}
+
+.header-data {
+    display: flex;
+    align-items: flex-end;
+    font-size: 0.9rem;
+    color: #475569;
+    font-weight: bold;
+}
+
+/* Ativa o cabeçalho apenas no PDF */
+.pdf-mode-global .pdf-header {
+    display: flex;
+}
+
+.pdf-mode-global .no-print {
+    display: none !important;
+}
+
+.pdf-mode-global .sidebar {
+    display: none !important;
+}
+
+/* --- Tabela 5W2H Otimizada --- */
+.table-5w2h th,
+.table-5w2h td {
+    vertical-align: top;
+    line-height: 1.4;
+}
+
+.info-sub {
+    display: block;
+    margin-top: 8px;
+    font-size: 0.85em;
+    color: #475569;
+    padding-top: 5px;
+    border-top: 1px dashed #cbd5e1;
+}
+
+.info-sub strong {
+    color: #0284c7;
+}

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma de Análise RCA - Vale</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <script src="localforage.min.js"></script>
+    <script src="html2pdf.bundle.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <aside class="sidebar no-print">
+            <h2>Gestão do Estudo</h2>
+            <div class="acoes-sidebar">
+                <button onclick="document.getElementById('file-import').click()">📂 Importar (.json)</button>
+                <input type="file" id="file-import" accept=".json" style="display:none" onchange="importarJSON(event)">
+                <button onclick="exportarJSON()" class="btn-secundary">💾 Exportar (.json)</button>
+            </div>
+
+            <h2 style="margin-top: 20px;">Status da Validação</h2>
+            <ul id="checklist">
+                <li id="check-dados" class="pending">Dados Iniciais e Risco</li>
+                <li id="check-arvore" class="pending">Árvore de Causas</li>
+                <li id="check-acao" class="pending">Plano de Ação (5W2H)</li>
+                <li id="check-presenca" class="pending">Lista de Presença</li>
+            </ul>
+
+            <div class="acoes-sidebar">
+                <button id="btn-pdf" disabled>Gerar Relatório PDF</button>
+                <button id="btn-limpar" class="btn-danger" onclick="limparRascunho()">Limpar Sistema</button>
+            </div>
+            <p id="status-save" class="status-save">Aguardando...</p>
+        </aside>
+
+        <main class="content" id="relatorio-content">
+
+            <div id="pdf-header" class="pdf-header">
+                <div class="logo-container">
+                    <img id="logo-empresa-img" src="" alt="Logo Corporativa" style="display: none;">
+                </div>
+                <div class="header-text">
+                    <h2 id="nome-empresa-display">Vale S/A</h2>
+                    <p>Relatório de Investigação Técnica e RCA</p>
+                </div>
+                <div class="header-data">
+                    <span id="data-emissao-pdf"></span>
+                </div>
+            </div>
+
+            <header class="no-print">
+                <h1>Estudo de Confiabilidade - Análise de Causa Raiz</h1>
+            </header>
+
+            <section class="card no-print">
+                <h3>⚙️ Configurações Corporativas</h3>
+                <div class="form-group row">
+                    <div class="input-wrapper">
+                        <label>Empresa Responsável:</label>
+                        <input type="text" id="nome-empresa" value="Vale S/A"
+                            oninput="atualizarCabecalho(); salvarEstado();">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Logotipo (Upload):</label>
+                        <input type="file" id="logo-upload" accept="image/*" onchange="processarLogo(event)">
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center;" class="no-print">
+                    <h3>1. Dados Iniciais e Matriz de Risco</h3>
+                    <select id="template-selector" onchange="aplicarTemplate()">
+                        <option value="">Carregar Template Rápido...</option>
+                        <option value="lte">Falha Sinal LTE / GPS (Despacho)</option>
+                        <option value="spda">Desarme por Anomalia de SPDA</option>
+                        <option value="rede">Queda de Switch/SD-WAN</option>
+                    </select>
+                </div>
+                <div class="form-group row">
+                    <div class="input-wrapper">
+                        <label>Título do Evento:</label>
+                        <input type="text" id="titulo" placeholder="Ex: Falha de conectividade"
+                            oninput="salvarEstado()">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Local / Área:</label>
+                        <input type="text" id="area" placeholder="Ex: Mina N4WSul" oninput="salvarEstado()">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Data da Ocorrência:</label>
+                        <input type="date" id="data" oninput="salvarEstado()">
+                    </div>
+                </div>
+                <div class="form-group row" style="margin-top: 15px;">
+                    <div class="input-wrapper">
+                        <label>Probabilidade:</label>
+                        <select id="probabilidade" onchange="calcularRisco(); salvarEstado()">
+                            <option value="">Selecione...</option>
+                            <option value="1">Rara (1)</option>
+                            <option value="2">Improvável (2)</option>
+                            <option value="3">Possível (3)</option>
+                            <option value="4">Provável (4)</option>
+                            <option value="5">Quase Certa (5)</option>
+                        </select>
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Severidade:</label>
+                        <select id="severidade" onchange="calcularRisco(); salvarEstado()">
+                            <option value="">Selecione...</option>
+                            <option value="1">Insignificante (1)</option>
+                            <option value="2">Menor (2)</option>
+                            <option value="3">Moderada (3)</option>
+                            <option value="4">Maior (4)</option>
+                            <option value="5">Catastrófica (5)</option>
+                        </select>
+                    </div>
+                    <div class="input-wrapper risk-display">
+                        <label>Nível de Risco:</label>
+                        <div id="risco-resultado" class="risk-badge">Não Avaliado</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card" id="secao-metodologias">
+                <div style="display: flex; justify-content: space-between; align-items: center;" class="no-print">
+                    <h3>2. Metodologias de Investigação</h3>
+                </div>
+                <div class="tabs-container no-print">
+                    <button class="tab-btn active" onclick="abrirAba(event, 'aba-arvore')">Árvore de Causas</button>
+                    <button class="tab-btn" onclick="abrirAba(event, 'aba-5pq')">5 Porquês</button>
+                    <button class="tab-btn" onclick="abrirAba(event, 'aba-ishikawa')">Ishikawa</button>
+                </div>
+                <div id="aba-arvore" class="tab-content" style="display: block;">
+                    <h4 class="metodologia-titulo">▶ Árvore de Causas</h4>
+                    <div class="form-group row no-print">
+                        <select id="tipo-novo-no" class="tipo-select">
+                            <option value="evento">🟧 Evento (Âmbar)</option>
+                            <option value="hipotese">🟨 Hipótese (Amarelo)</option>
+                            <option value="validada">🟩 Hip. Validada (Verde Claro)</option>
+                            <option value="raiz">🟥 Causa Raiz (Vermelho)</option>
+                        </select>
+                        <input type="text" id="nova-causa-topo" placeholder="Descreva o nó principal...">
+                        <button onclick="adicionarCausaTopo()">Adicionar Nó</button>
+                    </div>
+                    <div class="legenda-cores no-print">
+                        <span class="badge-evento">Evento</span><span class="badge-hipotese">Hipótese</span>
+                        <span class="badge-validada">Hip. Validada</span><span class="badge-raiz">Causa Raiz</span>
+                    </div>
+                    <div id="arvore-container" class="tree-container"></div>
+                </div>
+                <div id="aba-5pq" class="tab-content" style="display: none;">
+                    <h4 class="metodologia-titulo">▶ 5 Porquês</h4>
+                    <div class="form-group row no-print">
+                        <input type="text" id="novo-porque" placeholder="Descreva o Porquê...">
+                        <button onclick="adicionarPorque()">Adicionar Porquê</button>
+                    </div>
+                    <ul id="lista-5pq" class="lista-porques"></ul>
+                </div>
+                <div id="aba-ishikawa" class="tab-content" style="display: none;">
+                    <h4 class="metodologia-titulo">▶ Diagrama de Ishikawa (6Ms)</h4>
+                    <div class="ishikawa-grid">
+                        <div class="ishikawa-box">
+                            <h5>Método</h5><input type="text" id="ish-metodo" class="no-print"
+                                onkeypress="addIshikawa(event, 'metodo')">
+                            <ul id="lista-metodo"></ul>
+                        </div>
+                        <div class="ishikawa-box">
+                            <h5>Máquina</h5><input type="text" id="ish-maquina" class="no-print"
+                                onkeypress="addIshikawa(event, 'maquina')">
+                            <ul id="lista-maquina"></ul>
+                        </div>
+                        <div class="ishikawa-box">
+                            <h5>Material</h5><input type="text" id="ish-material" class="no-print"
+                                onkeypress="addIshikawa(event, 'material')">
+                            <ul id="lista-material"></ul>
+                        </div>
+                        <div class="ishikawa-box">
+                            <h5>Mão de Obra</h5><input type="text" id="ish-mao" class="no-print"
+                                onkeypress="addIshikawa(event, 'mao')">
+                            <ul id="lista-mao"></ul>
+                        </div>
+                        <div class="ishikawa-box">
+                            <h5>Medida</h5><input type="text" id="ish-medida" class="no-print"
+                                onkeypress="addIshikawa(event, 'medida')">
+                            <ul id="lista-medida"></ul>
+                        </div>
+                        <div class="ishikawa-box">
+                            <h5>Meio Ambiente</h5><input type="text" id="ish-meio" class="no-print"
+                                onkeypress="addIshikawa(event, 'meio')">
+                            <ul id="lista-meio"></ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h3>3. Plano de Ação Estruturado (5W2H)</h3>
+                <div class="form-group row no-print">
+                    <input type="text" id="acao-oque" placeholder="What: O que será feito?">
+                    <input type="text" id="acao-porque" placeholder="Why: Por que? (Justificativa)">
+                </div>
+                <div class="form-group row no-print">
+                    <input type="text" id="acao-quem" placeholder="Who: Quem fará?">
+                    <input type="date" id="acao-quando" title="When: Quando?">
+                    <input type="text" id="acao-onde" placeholder="Where: Onde?">
+                </div>
+                <div class="form-group row no-print">
+                    <input type="text" id="acao-como" placeholder="How: Como será executado?">
+                    <input type="text" id="acao-quanto" placeholder="How Much: Quanto custa/recursos?">
+                    <button onclick="adicionarAcao()">Incluir Ação</button>
+                </div>
+                <table id="tabela-acoes" class="table-5w2h">
+                    <thead>
+                        <tr>
+                            <th>Ação & Justificativa <br><small>(What / Why)</small></th>
+                            <th>Responsável <br><small>(Who)</small></th>
+                            <th>Local & Prazo <br><small>(Where / When)</small></th>
+                            <th>Procedimento & Custo <br><small>(How / How Much)</small></th>
+                            <th class="no-print">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+
+            <section class="card">
+                <h3>4. Evidências Fotográficas</h3>
+                <div class="form-group row no-print">
+                    <div class="input-wrapper"><label>Título da Foto:</label><input type="text" id="foto-titulo"
+                            placeholder="Ex: Antena Quebrada"></div>
+                    <div class="input-wrapper"><label>Descrição (Opcional):</label><input type="text" id="foto-desc"
+                            placeholder="Detalhes..."></div>
+                </div>
+                <div class="form-group mt-15 no-print">
+                    <label for="foto-upload" class="upload-btn">📷 Escolher Foto e Anexar</label>
+                    <input type="file" id="foto-upload" accept="image/*" style="display: none;"
+                        onchange="processarImagem(event)">
+                </div>
+                <div id="galeria-fotos" class="gallery"></div>
+            </section>
+
+            <section class="card" style="page-break-before: auto;">
+                <h3>5. Lista de Presença</h3>
+                <div class="form-group row no-print">
+                    <input type="text" id="novo-participante" placeholder="Nome do analista / participante...">
+                    <button onclick="adicionarParticipante()">Adicionar Participante</button>
+                </div>
+                <ul id="lista-presenca" class="tags-list"></ul>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
