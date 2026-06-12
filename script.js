@@ -60,6 +60,8 @@ async function salvarEstado() {
     estado.postmortem.funcionou = document.getElementById('pm-funcionou').value;
     estado.postmortem.falhou = document.getElementById('pm-falhou').value;
 
+    document.getElementById('fishbone-efeito').textContent = estado.dadosIniciais.titulo || 'Nenhum evento preenchido';
+
     try {
         await localforage.setItem('rca_estado', estado);
         document.getElementById('status-save').textContent = 'Salvo em: ' + new Date().toLocaleTimeString();
@@ -505,6 +507,8 @@ function restaurarInterface() {
     document.getElementById('resumo-executivo').value = estado.dadosIniciais.resumo || '';
     document.getElementById('pm-funcionou').value = estado.postmortem?.funcionou || '';
     document.getElementById('pm-falhou').value = estado.postmortem?.falhou || '';
+
+    document.getElementById('fishbone-efeito').textContent = estado.dadosIniciais.titulo || 'Nenhum evento preenchido';
 
     calcularRisco(); atualizarCabecalho(); renderizarArvore(); renderizarPorques();
     renderizarIshikawa(); renderizarBarreiras(); renderizarTimeline(); renderizarAcoes(); renderizarParticipantes(); renderizarFotos();

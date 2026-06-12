@@ -211,36 +211,45 @@
                 </div>
                 <div id="aba-ishikawa" class="tab-content" style="display: none;">
                     <h4 class="metodologia-titulo">▶ Diagrama de Ishikawa (6Ms)</h4>
-                    <div class="ishikawa-grid">
-                        <div class="ishikawa-box">
-                            <h5>Método</h5><input type="text" id="ish-metodo" class="no-print"
-                                onkeypress="addIshikawa(event, 'metodo')">
-                            <ul id="lista-metodo"></ul>
+                    <div class="fishbone-diagram">
+                        <div class="fishbone-categories">
+                            <div class="fishbone-row top-row">
+                                <div class="ishikawa-box branch-top">
+                                    <h5>Método</h5><input type="text" id="ish-metodo" class="no-print" onkeypress="addIshikawa(event, 'metodo')">
+                                    <ul id="lista-metodo"></ul>
+                                </div>
+                                <div class="ishikawa-box branch-top">
+                                    <h5>Máquina</h5><input type="text" id="ish-maquina" class="no-print" onkeypress="addIshikawa(event, 'maquina')">
+                                    <ul id="lista-maquina"></ul>
+                                </div>
+                                <div class="ishikawa-box branch-top">
+                                    <h5>Material</h5><input type="text" id="ish-material" class="no-print" onkeypress="addIshikawa(event, 'material')">
+                                    <ul id="lista-material"></ul>
+                                </div>
+                            </div>
+
+                            <div class="fishbone-spine"></div>
+
+                            <div class="fishbone-row bottom-row">
+                                <div class="ishikawa-box branch-bottom">
+                                    <h5>Mão de Obra</h5><input type="text" id="ish-mao" class="no-print" onkeypress="addIshikawa(event, 'mao')">
+                                    <ul id="lista-mao"></ul>
+                                </div>
+                                <div class="ishikawa-box branch-bottom">
+                                    <h5>Medida</h5><input type="text" id="ish-medida" class="no-print" onkeypress="addIshikawa(event, 'medida')">
+                                    <ul id="lista-medida"></ul>
+                                </div>
+                                <div class="ishikawa-box branch-bottom">
+                                    <h5>Meio Ambiente</h5><input type="text" id="ish-meio" class="no-print" onkeypress="addIshikawa(event, 'meio')">
+                                    <ul id="lista-meio"></ul>
+                                </div>
+                            </div>
                         </div>
-                        <div class="ishikawa-box">
-                            <h5>Máquina</h5><input type="text" id="ish-maquina" class="no-print"
-                                onkeypress="addIshikawa(event, 'maquina')">
-                            <ul id="lista-maquina"></ul>
-                        </div>
-                        <div class="ishikawa-box">
-                            <h5>Material</h5><input type="text" id="ish-material" class="no-print"
-                                onkeypress="addIshikawa(event, 'material')">
-                            <ul id="lista-material"></ul>
-                        </div>
-                        <div class="ishikawa-box">
-                            <h5>Mão de Obra</h5><input type="text" id="ish-mao" class="no-print"
-                                onkeypress="addIshikawa(event, 'mao')">
-                            <ul id="lista-mao"></ul>
-                        </div>
-                        <div class="ishikawa-box">
-                            <h5>Medida</h5><input type="text" id="ish-medida" class="no-print"
-                                onkeypress="addIshikawa(event, 'medida')">
-                            <ul id="lista-medida"></ul>
-                        </div>
-                        <div class="ishikawa-box">
-                            <h5>Meio Ambiente</h5><input type="text" id="ish-meio" class="no-print"
-                                onkeypress="addIshikawa(event, 'meio')">
-                            <ul id="lista-meio"></ul>
+                        <div class="fishbone-head">
+                            <div class="fishbone-head-box">
+                                <strong style="display: block; font-size: 0.8em; color: #475569; margin-bottom: 5px;">EFEITO (PROBLEMA):</strong>
+                                <span id="fishbone-efeito">Nenhum evento preenchido</span>
+                            </div>
                         </div>
                     </div>
                 </div>
