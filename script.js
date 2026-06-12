@@ -257,7 +257,7 @@ function removerPorque(index) { estado.cincoPorques.splice(index, 1); renderizar
 function renderizarPorques() {
     const lista = document.getElementById('lista-5pq'); lista.innerHTML = '';
     estado.cincoPorques.forEach((pq, index) => {
-        lista.innerHTML += `<li>${pq} <span class="no-print" style="cursor:pointer; color:red; margin-left:auto;" onclick="removerPorque(${index})">✖</span></li>`;
+        lista.innerHTML += `<li><span class="pq-text">${pq}</span> <span class="no-print" style="cursor:pointer; color:red; margin-left:auto;" onclick="removerPorque(${index})">✖</span></li>`;
     });
 }
 
