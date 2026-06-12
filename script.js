@@ -1,9 +1,9 @@
 // === Estado da Aplicação Atualizado (5W2H e Config) ===
 let estado = {
     config: { empresa: 'Vale S/A', logoBase64: '' },
-    dadosIniciais: { titulo: '', area: '', data: '', probabilidade: '', severidade: '', risco: 'Não Avaliado' },
-    arvore: [], cincoPorques: [], ishikawa: { metodo: [], maquina: [], material: [], mao: [], medida: [], meio: [] },
-    acoes: [], participantes: [], fotos: []
+    dadosIniciais: { titulo: '', area: '', data: '', probabilidade: '', severidade: '', risco: 'Não Avaliado', sistema: '', downtime: '', impacto: '' },
+    arvore: [], cincoPorques: [], ishikawa: { metodo: [], maquina: [], material: [], mao: [], medida: [], meio: [] }, timeline: [],
+    acoes: [], participantes: [], fotos: [], postmortem: { funcionou: '', falhou: '' }
 };
 
 // Inicialização com IndexedDB (Assíncrona para evitar travamentos)
@@ -16,6 +16,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!estado.config) estado.config = { empresa: 'Vale S/A', logoBase64: '' };
             if (!estado.cincoPorques) estado.cincoPorques = [];
             if (!estado.ishikawa) estado.ishikawa = { metodo: [], maquina: [], material: [], mao: [], medida: [], meio: [] };
+            if (!estado.timeline) estado.timeline = [];
+            if (!estado.postmortem) estado.postmortem = { funcionou: '', falhou: '' };
+            if (estado.dadosIniciais.sistema === undefined) {
+                estado.dadosIniciais.sistema = '';
+                estado.dadosIniciais.downtime = '';
+                estado.dadosIniciais.impacto = '';
+            }
 
             document.getElementById('status-save').textContent = 'Rascunho recuperado do Banco Offline.';
             restaurarInterface();
@@ -36,6 +43,11 @@ async function salvarEstado() {
     estado.dadosIniciais.probabilidade = document.getElementById('probabilidade').value;
     estado.dadosIniciais.severidade = document.getElementById('severidade').value;
     estado.dadosIniciais.risco = document.getElementById('risco-resultado').textContent;
+    estado.dadosIniciais.sistema = document.getElementById('sistema').value;
+    estado.dadosIniciais.downtime = document.getElementById('downtime').value;
+    estado.dadosIniciais.impacto = document.getElementById('impacto').value;
+    estado.postmortem.funcionou = document.getElementById('pm-funcionou').value;
+    estado.postmortem.falhou = document.getElementById('pm-falhou').value;
 
     try {
         await localforage.setItem('rca_estado', estado);
@@ -251,18 +263,63 @@ function renderizarIshikawa() {
     });
 }
 
+// === Timeline ===
+function adicionarTimeline() {
+    const data = document.getElementById('timeline-data').value;
+    const hora = document.getElementById('timeline-hora').value;
+    const evento = document.getElementById('timeline-evento').value;
+
+    if (!data || !hora || !evento.trim()) return alert('Preencha data, hora e evento para a timeline.');
+
+    estado.timeline.push({ data, hora, evento: evento.trim() });
+
+    // Ordenar cronologicamente
+    estado.timeline.sort((a, b) => {
+        const dtA = new Date(`${a.data}T${a.hora}`);
+        const dtB = new Date(`${b.data}T${b.hora}`);
+        return dtA - dtB;
+    });
+
+    document.getElementById('timeline-evento').value = '';
+    renderizarTimeline(); salvarEstado();
+}
+
+function removerTimeline(index) { estado.timeline.splice(index, 1); renderizarTimeline(); salvarEstado(); }
+
+function renderizarTimeline() {
+    const lista = document.getElementById('lista-timeline');
+    lista.innerHTML = '';
+    estado.timeline.forEach((item, index) => {
+        // formatar data
+        const dateParts = item.data.split('-');
+        const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : item.data;
+
+        lista.innerHTML += `
+            <li class="timeline-item">
+                <div class="timeline-content">
+                    <span class="timeline-datetime">${formattedDate} ${item.hora}</span>
+                    <span class="timeline-text">${item.evento}</span>
+                    <button class="btn-danger btn-small no-print" onclick="removerTimeline(${index})">X</button>
+                </div>
+            </li>
+        `;
+    });
+}
+
 // === Plano de Ação 5W2H ===
 function adicionarAcao() {
     const oque = document.getElementById('acao-oque').value; const porque = document.getElementById('acao-porque').value;
     const quem = document.getElementById('acao-quem').value; const quando = document.getElementById('acao-quando').value;
     const onde = document.getElementById('acao-onde').value; const como = document.getElementById('acao-como').value;
     const quanto = document.getElementById('acao-quanto').value;
+    const status = document.getElementById('acao-status').value;
 
     if (!oque || !quem || !quando) return alert("Preencha ao menos O Que, Quem e Quando!");
 
-    estado.acoes.push({ oque, porque, quem, quando, onde, como, quanto });
+    estado.acoes.push({ oque, porque, quem, quando, onde, como, quanto, status });
 
     document.querySelectorAll('input[id^="acao-"]').forEach(inp => inp.value = '');
+    document.getElementById('acao-status').value = 'A Fazer';
     renderizarAcoes(); salvarEstado();
 }
 
@@ -271,12 +328,17 @@ function removerAcao(index) { estado.acoes.splice(index, 1); renderizarAcoes(); 
 function renderizarAcoes() {
     const tbody = document.querySelector('#tabela-acoes tbody'); tbody.innerHTML = '';
     estado.acoes.forEach((a, index) => {
+        let badgeClass = 'status-todo';
+        if (a.status === 'Em Andamento') badgeClass = 'status-doing';
+        else if (a.status === 'Concluído') badgeClass = 'status-done';
+
         // Agrupamento lógico para caber no PDF Retrato
         tbody.innerHTML += `<tr>
             <td>${a.oque} <span class="info-sub"><strong>Por que:</strong> ${a.porque || 'N/A'}</span></td>
             <td>${a.quem}</td>
             <td>${a.quando} <span class="info-sub"><strong>Onde:</strong> ${a.onde || 'N/A'}</span></td>
             <td>${a.como || 'N/A'} <span class="info-sub"><strong>Custo:</strong> ${a.quanto || 'N/A'}</span></td>
+            <td><span class="status-badge ${badgeClass}">${a.status || 'A Fazer'}</span></td>
             <td class="no-print"><button class="btn-danger btn-small" onclick="removerAcao(${index})">X</button></td>
         </tr>`;
     });
@@ -338,14 +400,19 @@ function restaurarInterface() {
     document.getElementById('data').value = estado.dadosIniciais.data || '';
     document.getElementById('probabilidade').value = estado.dadosIniciais.probabilidade || '';
     document.getElementById('severidade').value = estado.dadosIniciais.severidade || '';
+    document.getElementById('sistema').value = estado.dadosIniciais.sistema || '';
+    document.getElementById('downtime').value = estado.dadosIniciais.downtime || '';
+    document.getElementById('impacto').value = estado.dadosIniciais.impacto || '';
+    document.getElementById('pm-funcionou').value = estado.postmortem?.funcionou || '';
+    document.getElementById('pm-falhou').value = estado.postmortem?.falhou || '';
 
     calcularRisco(); atualizarCabecalho(); renderizarArvore(); renderizarPorques();
-    renderizarIshikawa(); renderizarAcoes(); renderizarParticipantes(); renderizarFotos();
+    renderizarIshikawa(); renderizarTimeline(); renderizarAcoes(); renderizarParticipantes(); renderizarFotos();
 }
 
 function validarEstado() {
     const dadosOk = estado.dadosIniciais.titulo && estado.dadosIniciais.area && estado.dadosIniciais.data && estado.dadosIniciais.probabilidade && estado.dadosIniciais.severidade;
-    const metodosOk = estado.arvore.length > 0 || estado.cincoPorques.length > 0 || Object.values(estado.ishikawa).some(arr => arr.length > 0);
+    const metodosOk = estado.arvore.length > 0 || estado.cincoPorques.length > 0 || Object.values(estado.ishikawa).some(arr => arr.length > 0) || (estado.timeline && estado.timeline.length > 0);
     const acaoOk = estado.acoes.length > 0; const presencaOk = estado.participantes.length > 0;
 
     document.getElementById('check-dados').className = dadosOk ? 'ok' : 'pending';
@@ -373,11 +440,12 @@ document.getElementById('btn-pdf').addEventListener('click', () => {
         const temArvore = tab.id === 'aba-arvore' && estado.arvore.length > 0;
         const tem5PQ = tab.id === 'aba-5pq' && estado.cincoPorques.length > 0;
         const temIshikawa = tab.id === 'aba-ishikawa' && Object.values(estado.ishikawa).some(arr => arr.length > 0);
-        tab.style.display = (temArvore || tem5PQ || temIshikawa) ? 'block' : 'none';
+        const temTimeline = tab.id === 'aba-timeline' && estado.timeline && estado.timeline.length > 0;
+        tab.style.display = (temArvore || tem5PQ || temIshikawa || temTimeline) ? 'block' : 'none';
     });
 
     // Converte inputs para texto limpo
-    const inputs = document.querySelectorAll('input[type="text"], input[type="date"], select');
+    const inputs = document.querySelectorAll('input[type="text"], input[type="date"], select, textarea');
     inputs.forEach(input => {
         if (input.id && input.style.display !== 'none' && !input.closest('.no-print')) {
             const span = document.createElement('span'); span.className = 'pdf-text';

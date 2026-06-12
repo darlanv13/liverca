@@ -185,13 +185,19 @@ header h1 {
 }
 
 input,
-select {
+select,
+textarea {
     padding: 10px;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     font-size: 0.95rem;
     outline: none;
     background-color: white;
+}
+
+textarea {
+    resize: vertical;
+    font-family: inherit;
 }
 
 select {
@@ -342,6 +348,7 @@ th {
     min-height: 38px;
     display: inline-block;
     width: 100%;
+    white-space: pre-wrap; /* important for textareas */
 }
 
 /* --- Sistema de Abas --- */
@@ -463,6 +470,70 @@ th {
     font-weight: bold;
     margin-right: 10px;
     color: #0284c7;
+}
+
+/* --- Timeline --- */
+.timeline-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 0 0;
+    position: relative;
+}
+
+.timeline-list::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    width: 4px;
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 15px;
+    padding-left: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    background: #0284c7;
+    border: 3px solid white;
+    border-radius: 50%;
+    z-index: 1;
+    box-shadow: 0 0 0 2px #0284c7;
+}
+
+.timeline-content {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 10px 15px;
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.timeline-datetime {
+    font-weight: bold;
+    color: #0284c7;
+    margin-right: 15px;
+    white-space: nowrap;
+}
+
+.timeline-text {
+    flex-grow: 1;
 }
 
 /* --- Ishikawa --- */
@@ -650,4 +721,28 @@ th {
 
 .info-sub strong {
     color: #0284c7;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-align: center;
+    display: inline-block;
+}
+
+.status-todo {
+    background-color: #cbd5e1;
+    color: #334155;
+}
+
+.status-doing {
+    background-color: #fef08a;
+    color: #854d0e;
+}
+
+.status-done {
+    background-color: #bbf7d0;
+    color: #166534;
 }
