@@ -191,9 +191,8 @@ function gerarId() { return '_' + Math.random().toString(36).substr(2, 9); }
 
 function adicionarCausaTopo() {
     const input = document.getElementById('nova-causa-topo');
-    const tipo = document.getElementById('tipo-novo-no').value;
     if (!input.value.trim()) return;
-    estado.arvore.push({ id: gerarId(), texto: input.value, tipo: tipo, filhos: [] });
+    estado.arvore.push({ id: gerarId(), texto: input.value, tipo: 'evento', filhos: [] });
     input.value = ''; renderizarArvore(); salvarEstado();
 }
 
@@ -205,11 +204,12 @@ function iterarArvore(nos, idBusca, callback) {
     return false;
 }
 
-function adicionarSubcausa(idPai) {
-    const tipo = document.getElementById('tipo-novo-no').value;
-    const texto = prompt("Descreva a subcausa vinculada:");
+function adicionarSubcausa(idPai, tipoPredefinido) {
+    const texto = prompt(`Adicionando [${tipoPredefinido.toUpperCase()}]. Descreva o item:`);
     if (!texto) return;
-    iterarArvore(estado.arvore, idPai, (nos, index) => { nos[index].filhos.push({ id: gerarId(), texto: texto, tipo: tipo, filhos: [] }); });
+    iterarArvore(estado.arvore, idPai, (nos, index) => {
+        nos[index].filhos.push({ id: gerarId(), texto: texto, tipo: tipoPredefinido, filhos: [] });
+    });
     renderizarArvore(); salvarEstado();
 }
 
@@ -231,15 +231,44 @@ function renderizarArvore() {
 
             // Text logic tag based on node type
             let tagTexto = 'EVENTO';
-            if(no.tipo === 'hipotese') tagTexto = 'HIPÓTESE';
-            if(no.tipo === 'validada') tagTexto = 'VALIDADO';
-            if(no.tipo === 'raiz') tagTexto = 'CAUSA RAIZ';
+            let botoesAcao = '';
+
+            if (no.tipo === 'evento') {
+                tagTexto = 'EVENTO TOPO';
+                botoesAcao = `<button class="btn-small no-print" style="color:#333;" onclick="adicionarSubcausa('${no.id}', 'hipotese')">+ Hipótese</button>`;
+            }
+            else if (no.tipo === 'hipotese') {
+                tagTexto = 'HIPÓTESE';
+                botoesAcao = `
+                    <button class="btn-small no-print" style="color:#166534; background:#bbf7d0;" onclick="adicionarSubcausa('${no.id}', 'validada')">+ Validada</button>
+                    <button class="btn-small no-print" style="color:#334155; background:#cbd5e1;" onclick="adicionarSubcausa('${no.id}', 'nao-validada')">+ Não Validada</button>
+                `;
+            }
+            else if (no.tipo === 'validada') {
+                tagTexto = 'HIP. VALIDADA';
+                botoesAcao = `
+                    <button class="btn-small no-print" style="color:#fff; background:#f87171;" onclick="adicionarSubcausa('${no.id}', 'raiz')">+ C. Raiz</button>
+                    <button class="btn-small no-print" style="color:#fff; background:#fb923c;" onclick="adicionarSubcausa('${no.id}', 'raiz-secundaria')">+ C. Secundária</button>
+                `;
+            }
+            else if (no.tipo === 'nao-validada') {
+                tagTexto = 'NÃO VALIDADA';
+                // Final node, no actions
+            }
+            else if (no.tipo === 'raiz-secundaria') {
+                tagTexto = 'CAUSA SECUNDÁRIA';
+                // Final node, no actions
+            }
+            else if (no.tipo === 'raiz') {
+                tagTexto = 'CAUSA RAIZ';
+                // Final node, no actions
+            }
 
             html += `<li>
                         <div class="node-content ${tipoClasse}">
                             <span class="logic-tag">${tagTexto}</span>
                             <span class="node-text" onclick="editarNo('${no.id}')">${no.texto}</span>
-                            <button class="btn-small no-print" style="color:#333;" onclick="adicionarSubcausa('${no.id}')">+ Nó</button>
+                            <div class="node-actions">${botoesAcao}</div>
                         </div>
                         ${no.filhos.length > 0 ? criarHTML(no.filhos) : ''}
                     </li>`;

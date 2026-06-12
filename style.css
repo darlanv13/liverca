@@ -506,27 +506,34 @@ th {
 
 /* Cores Específicas do Fluxograma */
 .tipo-evento {
-    background-color: #ffbf00 !important;
+    background-color: #ffbf00 !important; /* Âmbar */
 }
 
-/* Âmbar */
 .tipo-hipotese {
-    background-color: #fef08a !important;
+    background-color: #fef08a !important; /* Amarelo */
 }
 
-/* Amarelo */
 .tipo-validada {
-    background-color: #bbf7d0 !important;
+    background-color: #bbf7d0 !important; /* Verde Claro */
 }
 
-/* Verde Claro */
-.tipo-raiz {
-    background-color: #f87171 !important;
+.tipo-nao-validada {
+    background-color: #cbd5e1 !important; /* Cinza - Fim da linha */
+    color: #475569 !important;
+}
+
+.tipo-raiz-secundaria {
+    background-color: #fb923c !important; /* Laranja */
     color: white !important;
 }
 
-/* Vermelho */
+.tipo-raiz {
+    background-color: #f87171 !important; /* Vermelho */
+    color: white !important;
+}
 
+
+/* Badges da Legenda */
 .badge-evento {
     background-color: #ffbf00;
 }
@@ -539,9 +546,28 @@ th {
     background-color: #bbf7d0;
 }
 
+.badge-nao-validada {
+    background-color: #cbd5e1;
+    color: #475569;
+}
+
+.badge-raiz-secundaria {
+    background-color: #fb923c;
+    color: white;
+}
+
 .badge-raiz {
     background-color: #f87171;
     color: white;
+}
+
+/* Organização de botões dentro do nó */
+.node-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    margin-top: 5px;
 }
 
 /* --- 5 Porquês --- */

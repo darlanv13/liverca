@@ -186,18 +186,16 @@
                 <div id="aba-arvore" class="tab-content" style="display: block;">
                     <h4 class="metodologia-titulo">▶ Árvore de Causas</h4>
                     <div class="form-group row no-print">
-                        <select id="tipo-novo-no" class="tipo-select">
-                            <option value="evento">🟧 Evento (Âmbar)</option>
-                            <option value="hipotese">🟨 Hipótese (Amarelo)</option>
-                            <option value="validada">🟩 Hip. Validada (Verde Claro)</option>
-                            <option value="raiz">🟥 Causa Raiz (Vermelho)</option>
-                        </select>
-                        <input type="text" id="nova-causa-topo" placeholder="Descreva o nó principal...">
-                        <button onclick="adicionarCausaTopo()">Adicionar Nó</button>
+                        <input type="text" id="nova-causa-topo" placeholder="Descreva o Evento Topo (Problema)...">
+                        <button onclick="adicionarCausaTopo()">Adicionar Evento Inicial</button>
                     </div>
-                    <div class="legenda-cores no-print">
-                        <span class="badge-evento">Evento</span><span class="badge-hipotese">Hipótese</span>
-                        <span class="badge-validada">Hip. Validada</span><span class="badge-raiz">Causa Raiz</span>
+                    <div class="legenda-cores no-print" style="flex-wrap: wrap;">
+                        <span class="badge-evento">Evento</span>
+                        <span class="badge-hipotese">Hipótese</span>
+                        <span class="badge-validada">Hip. Validada</span>
+                        <span class="badge-nao-validada">Hip. Não Validada</span>
+                        <span class="badge-raiz-secundaria">Causa Secundária</span>
+                        <span class="badge-raiz">Causa Raiz Principal</span>
                     </div>
                     <div id="arvore-container" class="tree-container"></div>
                 </div>
