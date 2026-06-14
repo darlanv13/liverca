@@ -1,38 +1,64 @@
 // === Estado da Aplicação Atualizado (5W2H e Config) ===
-let estado = {
+const templateEstadoVazio = () => ({
     config: { empresa: 'Vale S/A', logoBase64: '' },
-    dadosIniciais: { titulo: '', area: '', data: '', probabilidade: '', severidade: '', risco: 'Não Avaliado', sistema: '', downtime: '', impacto: '', ttd: '', ttr: '', classificacao: '', violacaoSla: false, resumo: '' },
+    dadosIniciais: { prb: '', titulo: '', area: '', data: '', probabilidade: '', severidade: '', risco: 'Não Avaliado', sistema: '', downtime: '', impacto: '', custo: '', ttd: '', ttr: '', classificacao: '', violacaoSla: false, resumo: '' },
     arvore: [], cincoPorques: [], ishikawa: { metodo: [], maquina: [], material: [], mao: [], medida: [], meio: [] }, barreiras: [], timeline: [],
     acoes: [], participantes: [], fotos: [], postmortem: { funcionou: '', falhou: '' }
-};
+});
 
-// Inicialização com IndexedDB (Assíncrona para evitar travamentos)
+let estado = templateEstadoVazio();
+let masterData = { estudos: {}, ativoId: '' };
+
+function gerarId() { return '_' + Math.random().toString(36).substr(2, 9); }
+
+// Inicialização com IndexedDB
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const rascunho = await localforage.getItem('rca_estado');
-        if (rascunho) {
-            estado = rascunho;
-            // Fallback para versões anteriores do rascunho
-            if (!estado.config) estado.config = { empresa: 'Vale S/A', logoBase64: '' };
-            if (!estado.cincoPorques) estado.cincoPorques = [];
-            if (!estado.ishikawa) estado.ishikawa = { metodo: [], maquina: [], material: [], mao: [], medida: [], meio: [] };
-            if (!estado.barreiras) estado.barreiras = [];
-            if (!estado.timeline) estado.timeline = [];
-            if (!estado.postmortem) estado.postmortem = { funcionou: '', falhou: '' };
+        const bd = await localforage.getItem('rca_master');
+        if (bd && bd.estudos && Object.keys(bd.estudos).length > 0) {
+            masterData = bd;
+            estado = masterData.estudos[masterData.ativoId];
+
+            // Garantir chaves novas para saves antigos
             if (estado.dadosIniciais.sistema === undefined) {
+                estado.dadosIniciais.prb = '';
                 estado.dadosIniciais.sistema = '';
                 estado.dadosIniciais.downtime = '';
                 estado.dadosIniciais.impacto = '';
+                estado.dadosIniciais.custo = '';
                 estado.dadosIniciais.ttd = '';
                 estado.dadosIniciais.ttr = '';
                 estado.dadosIniciais.classificacao = '';
                 estado.dadosIniciais.violacaoSla = false;
                 estado.dadosIniciais.resumo = '';
+                estado.postmortem = { funcionou: '', falhou: '' };
+                estado.barreiras = [];
+                estado.timeline = [];
             }
-
-            document.getElementById('status-save').textContent = 'Rascunho recuperado do Banco Offline.';
-            restaurarInterface();
+        } else {
+            // Migrar rascunho antigo (se existir) para o novo masterData
+            const rascunhoAntigo = await localforage.getItem('rca_estado');
+            const novoId = gerarId();
+            if (rascunhoAntigo) {
+                masterData.estudos[novoId] = rascunhoAntigo;
+                if (!masterData.estudos[novoId].timeline) masterData.estudos[novoId].timeline = [];
+                if (!masterData.estudos[novoId].barreiras) masterData.estudos[novoId].barreiras = [];
+                if (!masterData.estudos[novoId].postmortem) masterData.estudos[novoId].postmortem = { funcionou: '', falhou: '' };
+            } else {
+                masterData.estudos[novoId] = templateEstadoVazio();
+            }
+            masterData.ativoId = novoId;
+            estado = masterData.estudos[novoId];
+            await localforage.removeItem('rca_estado'); // limpa chave legada
         }
+
+        renderizarListaEstudos();
+        restaurarInterface();
+        document.getElementById('status-save').textContent = 'Estudo carregado.';
+
+        // Auto-save guard every 5 seconds to ensure we catch lingering input state changes
+        setInterval(salvarEstado, 5000);
+
     } catch (err) {
         console.error("Erro ao ler IndexedDB", err);
     }
@@ -40,9 +66,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     atualizarCabecalho();
 });
 
+let isSaving = false;
+
 // Salvamento Seguro (IndexedDB)
 async function salvarEstado() {
+    if (isSaving) return;
+    isSaving = true;
     estado.config.empresa = document.getElementById('nome-empresa').value;
+    estado.dadosIniciais.prb = document.getElementById('prb').value;
     estado.dadosIniciais.titulo = document.getElementById('titulo').value;
     estado.dadosIniciais.area = document.getElementById('area').value;
     estado.dadosIniciais.data = document.getElementById('data').value;
@@ -52,6 +83,7 @@ async function salvarEstado() {
     estado.dadosIniciais.sistema = document.getElementById('sistema').value;
     estado.dadosIniciais.downtime = document.getElementById('downtime').value;
     estado.dadosIniciais.impacto = document.getElementById('impacto').value;
+    estado.dadosIniciais.custo = document.getElementById('custo').value;
     estado.dadosIniciais.ttd = document.getElementById('ttd').value;
     estado.dadosIniciais.ttr = document.getElementById('ttr').value;
     estado.dadosIniciais.classificacao = document.getElementById('classificacao').value;
@@ -62,20 +94,170 @@ async function salvarEstado() {
 
     document.getElementById('fishbone-efeito').textContent = estado.dadosIniciais.titulo || 'Nenhum evento preenchido';
 
+    estado.ultimoAcesso = new Date().getTime();
+    masterData.estudos[masterData.ativoId] = estado; // Update master
+
     try {
-        await localforage.setItem('rca_estado', estado);
+        await localforage.setItem('rca_master', masterData);
         document.getElementById('status-save').textContent = 'Salvo em: ' + new Date().toLocaleTimeString();
+        renderizarListaEstudos(); // Renderiza sempre para atualizar a lista lateral também
     } catch (err) {
         console.error("Erro ao salvar IndexedDB", err);
+    } finally {
+        isSaving = false;
     }
     validarEstado();
 }
 
-async function limparRascunho() {
-    if (confirm("Apagar todo o banco de dados deste estudo?")) {
-        await localforage.removeItem('rca_estado');
-        location.reload();
+// === Gestão de Múltiplos Estudos ===
+async function carregarEstudoEspecifico(id) {
+    if (id && masterData.estudos[id] && id !== masterData.ativoId) {
+        // Force full state save from UI to memory FIRST
+        salvarEstadoSincrono();
+
+        // Save current UI state to the masterData before switching
+        masterData.estudos[masterData.ativoId] = JSON.parse(JSON.stringify(estado));
+        await localforage.setItem('rca_master', masterData);
+
+        masterData.ativoId = id;
+        estado = masterData.estudos[id];
+        estado.ultimoAcesso = new Date().getTime();
+        restaurarInterface();
+        await localforage.setItem('rca_master', masterData);
+        renderizarListaEstudos();
     }
+}
+
+function salvarEstadoSincrono() {
+    estado.config.empresa = document.getElementById('nome-empresa').value;
+    estado.dadosIniciais.prb = document.getElementById('prb').value;
+    estado.dadosIniciais.titulo = document.getElementById('titulo').value;
+    estado.dadosIniciais.area = document.getElementById('area').value;
+    estado.dadosIniciais.data = document.getElementById('data').value;
+    estado.dadosIniciais.probabilidade = document.getElementById('probabilidade').value;
+    estado.dadosIniciais.severidade = document.getElementById('severidade').value;
+    estado.dadosIniciais.sistema = document.getElementById('sistema').value;
+    estado.dadosIniciais.downtime = document.getElementById('downtime').value;
+    estado.dadosIniciais.impacto = document.getElementById('impacto').value;
+    estado.dadosIniciais.custo = document.getElementById('custo').value;
+    estado.dadosIniciais.ttd = document.getElementById('ttd').value;
+    estado.dadosIniciais.ttr = document.getElementById('ttr').value;
+    estado.dadosIniciais.classificacao = document.getElementById('classificacao').value;
+    estado.dadosIniciais.violacaoSla = document.getElementById('violacao-sla').checked;
+    estado.dadosIniciais.resumo = document.getElementById('resumo-executivo').value;
+    estado.postmortem.funcionou = document.getElementById('pm-funcionou').value;
+    estado.postmortem.falhou = document.getElementById('pm-falhou').value;
+}
+
+function renderizarListaEstudos() {
+    // 1. Atualizar Dropdown
+    const select = document.getElementById('seletor-estudos');
+    if (select) {
+        select.innerHTML = '';
+        Object.keys(masterData.estudos).forEach(id => {
+            const e = masterData.estudos[id];
+            const titulo = e.dadosIniciais?.titulo || `Estudo (Sem Título)`;
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.text = titulo;
+            if (id === masterData.ativoId) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    // 2. Atualizar Lista Lateral Recentes (Top 5)
+    const listaRecentes = document.getElementById('lista-estudos-recentes');
+    if (listaRecentes) {
+        listaRecentes.innerHTML = '';
+        const estudosArray = Object.keys(masterData.estudos).map(id => {
+            return { id: id, data: masterData.estudos[id] };
+        });
+
+        // Ordenar por ultimoAcesso desc
+        estudosArray.sort((a, b) => {
+            const timeA = a.data.ultimoAcesso || 0;
+            const timeB = b.data.ultimoAcesso || 0;
+            return timeB - timeA;
+        });
+
+        // Pegar top 5
+        const top5 = estudosArray.slice(0, 5);
+        top5.forEach(est => {
+            const e = est.data;
+            const prbFormatado = e.dadosIniciais?.prb ? `[${e.dadosIniciais.prb}] ` : '';
+            const titulo = e.dadosIniciais?.titulo || `Estudo em branco`;
+            const isAtivo = est.id === masterData.ativoId ? 'ativo' : '';
+
+            listaRecentes.innerHTML += `
+                <div class="recent-study-item ${isAtivo}" onclick="carregarEstudoEspecifico('${est.id}')">
+                    ${prbFormatado}${titulo}
+                </div>
+            `;
+        });
+    }
+}
+
+async function trocarEstudo() {
+    const id = document.getElementById('seletor-estudos').value;
+    if (id && masterData.estudos[id] && id !== masterData.ativoId) {
+        // Update current state with values from interface before swapping
+        estado.dadosIniciais.titulo = document.getElementById('titulo').value;
+        estado.dadosIniciais.area = document.getElementById('area').value;
+        estado.dadosIniciais.prb = document.getElementById('prb').value;
+
+        masterData.estudos[masterData.ativoId] = JSON.parse(JSON.stringify(estado));
+        await localforage.setItem('rca_master', masterData);
+
+        masterData.ativoId = id;
+        estado = masterData.estudos[id];
+        restaurarInterface();
+        document.getElementById('status-save').textContent = 'Estudo alterado.';
+    }
+}
+
+async function criarNovoEstudo() {
+    // Save current before creating new
+    if(masterData.ativoId) {
+        salvarEstadoSincrono();
+        masterData.estudos[masterData.ativoId] = JSON.parse(JSON.stringify(estado));
+        await localforage.setItem('rca_master', masterData);
+    }
+    const novoId = gerarId();
+    masterData.estudos[novoId] = templateEstadoVazio();
+    masterData.ativoId = novoId;
+    estado = masterData.estudos[novoId];
+
+    // Update interface explicitly without relying entirely on salvarEstado syncs
+    // to prevent race conditions in title syncing.
+    document.getElementById('nome-empresa').value = estado.config.empresa;
+    document.getElementById('titulo').value = '';
+    document.getElementById('area').value = '';
+    document.getElementById('prb').value = '';
+
+    renderizarListaEstudos();
+    restaurarInterface();
+    salvarEstado();
+}
+
+async function excluirEstudoAtual() {
+    if (!confirm("Tem certeza que deseja excluir ESTE estudo? Essa ação não tem volta.")) return;
+
+    delete masterData.estudos[masterData.ativoId];
+    const chavesRestantes = Object.keys(masterData.estudos);
+
+    if (chavesRestantes.length > 0) {
+        masterData.ativoId = chavesRestantes[0];
+        estado = masterData.estudos[masterData.ativoId];
+    } else {
+        const novoId = gerarId();
+        masterData.estudos[novoId] = templateEstadoVazio();
+        masterData.ativoId = novoId;
+        estado = masterData.estudos[novoId];
+    }
+
+    await localforage.setItem('rca_master', masterData);
+    renderizarListaEstudos();
+    restaurarInterface();
 }
 
 // === Cabeçalho e Logotipo Corporativo ===
@@ -153,6 +335,41 @@ function aplicarTemplate() {
     salvarEstado();
 }
 
+function gerarResumoAutomatico() {
+    const titulo = estado.dadosIniciais.titulo || "[Título não informado]";
+    const sistema = estado.dadosIniciais.sistema || "[Sistema não informado]";
+    const ttd = estado.dadosIniciais.ttd || "[Não medido]";
+    const ttr = estado.dadosIniciais.ttr || "[Não medido]";
+    const custo = estado.dadosIniciais.custo ? ` com um impacto financeiro estimado em ${estado.dadosIniciais.custo}` : "";
+
+    // Buscar causa raiz
+    let causasRaiz = [];
+    function buscarCausaRaiz(nos) {
+        nos.forEach(no => {
+            if (no.tipo === 'raiz' || no.tipo === 'raiz-secundaria') {
+                causasRaiz.push(no.texto);
+            }
+            if (no.filhos && no.filhos.length > 0) {
+                buscarCausaRaiz(no.filhos);
+            }
+        });
+    }
+    buscarCausaRaiz(estado.arvore);
+    const causaTexto = causasRaiz.length > 0 ? causasRaiz.join(" / ") : "[Causa Raiz não identificada no fluxo]";
+
+    // Progresso Ações
+    const totalAcoes = estado.acoes.length;
+    const acoesConcluidas = estado.acoes.filter(a => a.status === 'Concluído').length;
+    let planoAcaoStatus = totalAcoes > 0
+        ? `Temos um total de ${totalAcoes} ação(ões) mapeada(s), sendo ${acoesConcluidas} concluída(s).`
+        : "Nenhum plano de ação foi mapeado até o momento.";
+
+    const resumo = `O incidente referente a "${titulo}" impactou diretamente o serviço/sistema de "${sistema}"${custo}. \n\nMétricas de Resposta: O tempo de detecção (TTD) foi de ${ttd}, e o tempo de resolução (TTR) foi de ${ttr}.\n\nInvestigação: Após análise técnica, determinou-se que a causa raiz do problema foi: ${causaTexto}.\n\nPróximos Passos: ${planoAcaoStatus}`;
+
+    document.getElementById('resumo-executivo').value = resumo;
+    salvarEstado();
+}
+
 // === Exportar e Importar (.JSON) ===
 function exportarJSON() {
     salvarEstado();
@@ -187,8 +404,6 @@ function abrirAba(evt, idAba) {
 }
 
 // === Árvore de Causas, 5PQs e Ishikawa ===
-function gerarId() { return '_' + Math.random().toString(36).substr(2, 9); }
-
 function adicionarCausaTopo() {
     const input = document.getElementById('nova-causa-topo');
     if (!input.value.trim()) return;
@@ -476,6 +691,9 @@ function atualizarProgressoAcoes() {
 
 function renderizarAcoes() {
     const tbody = document.querySelector('#tabela-acoes tbody'); tbody.innerHTML = '';
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
     estado.acoes.forEach((a, index) => {
         let badgeClass = 'status-todo';
         if (a.status === 'Em Andamento') badgeClass = 'status-doing';
@@ -488,9 +706,21 @@ function renderizarAcoes() {
 
         const catBadgeHTML = a.categoria ? `<br><span class="cat-badge ${catClass}">${a.categoria}</span>` : '';
 
+        // Validação de Atraso
+        let linhaAtrasadaClass = '';
+        let alertaHtml = '';
+        if (a.quando && a.status !== 'Concluído') {
+            const dataPrazo = new Date(a.quando + 'T12:00:00');
+            dataPrazo.setHours(0, 0, 0, 0);
+            if (dataPrazo < hoje) {
+                linhaAtrasadaClass = 'linha-atrasada';
+                alertaHtml = `<span class="atrasado-alerta" title="Ação Atrasada">⚠️</span>`;
+            }
+        }
+
         // Agrupamento lógico para caber no PDF Retrato
-        tbody.innerHTML += `<tr>
-            <td>${a.oque} <span class="info-sub"><strong>Por que:</strong> ${a.porque || 'N/A'}</span></td>
+        tbody.innerHTML += `<tr class="${linhaAtrasadaClass}">
+            <td>${alertaHtml}${a.oque} <span class="info-sub"><strong>Por que:</strong> ${a.porque || 'N/A'}</span></td>
             <td>${a.quem}</td>
             <td>${a.quando} <span class="info-sub"><strong>Onde:</strong> ${a.onde || 'N/A'}</span></td>
             <td>${a.como || 'N/A'} ${catBadgeHTML} <span class="info-sub"><strong>Custo:</strong> ${a.quanto || 'N/A'}</span></td>
@@ -499,6 +729,39 @@ function renderizarAcoes() {
         </tr>`;
     });
     atualizarProgressoAcoes();
+}
+
+function exportarCSV() {
+    if (estado.acoes.length === 0) return alert("Não há ações mapeadas para exportar.");
+
+    // Headers do CSV
+    let csvContent = "\uFEFF"; // BOM para acentuação no Excel
+    csvContent += "O QUE (What),POR QUE (Why),QUEM (Who),QUANDO (When),ONDE (Where),COMO (How),QUANTO (How Much),CATEGORIA,STATUS\n";
+
+    estado.acoes.forEach(a => {
+        // Escapar aspas e separar por vírgulas
+        const linha = [
+            `"${(a.oque || '').replace(/"/g, '""')}"`,
+            `"${(a.porque || '').replace(/"/g, '""')}"`,
+            `"${(a.quem || '').replace(/"/g, '""')}"`,
+            `"${(a.quando || '').replace(/"/g, '""')}"`,
+            `"${(a.onde || '').replace(/"/g, '""')}"`,
+            `"${(a.como || '').replace(/"/g, '""')}"`,
+            `"${(a.quanto || '').replace(/"/g, '""')}"`,
+            `"${(a.categoria || '').replace(/"/g, '""')}"`,
+            `"${(a.status || '').replace(/"/g, '""')}"`
+        ];
+        csvContent += linha.join(",") + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Acoes_RCA_${estado.dadosIniciais.titulo.replace(/\\s+/g, '_') || 'Export'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 // === Participantes ===
@@ -552,6 +815,7 @@ function renderizarFotos() {
 // === Restauração e Validação ===
 function restaurarInterface() {
     document.getElementById('nome-empresa').value = estado.config?.empresa || 'Vale S/A';
+    document.getElementById('prb').value = estado.dadosIniciais.prb || '';
     document.getElementById('titulo').value = estado.dadosIniciais.titulo || '';
     document.getElementById('area').value = estado.dadosIniciais.area || '';
     document.getElementById('data').value = estado.dadosIniciais.data || '';
@@ -560,6 +824,7 @@ function restaurarInterface() {
     document.getElementById('sistema').value = estado.dadosIniciais.sistema || '';
     document.getElementById('downtime').value = estado.dadosIniciais.downtime || '';
     document.getElementById('impacto').value = estado.dadosIniciais.impacto || '';
+    document.getElementById('custo').value = estado.dadosIniciais.custo || '';
     document.getElementById('ttd').value = estado.dadosIniciais.ttd || '';
     document.getElementById('ttr').value = estado.dadosIniciais.ttr || '';
     document.getElementById('classificacao').value = estado.dadosIniciais.classificacao || '';

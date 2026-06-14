@@ -1003,6 +1003,38 @@ th {
     display: none !important;
 }
 
+/* --- Recent Studies List --- */
+.recent-studies-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.recent-study-item {
+    padding: 8px 10px;
+    background: #334155;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-left: 3px solid transparent;
+}
+
+.recent-study-item:hover {
+    background: #475569;
+}
+
+.recent-study-item.ativo {
+    border-left-color: #3b82f6;
+    background: #1e293b;
+    font-weight: bold;
+    color: #3b82f6;
+}
+
 /* --- Progress Bar Plan de Ação --- */
 .progress-container {
     display: flex;
@@ -1075,6 +1107,17 @@ th {
 .status-done {
     background-color: #bbf7d0;
     color: #166534;
+}
+
+.linha-atrasada {
+    background-color: #fee2e2 !important; /* Vermelho claro */
+}
+
+.atrasado-alerta {
+    color: #ef4444;
+    font-weight: bold;
+    display: inline-block;
+    margin-right: 5px;
 }
 
 .cat-badge {

@@ -7,18 +7,28 @@
     <title>Plataforma de Análise RCA - Vale</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <script src="localforage.min.js"></script>
-    <script src="html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body>
     <div class="container">
         <aside class="sidebar no-print">
-            <h2>Gestão do Estudo</h2>
+            <h2>Gestão de Estudos (RCA)</h2>
             <div class="acoes-sidebar">
+                <select id="seletor-estudos" style="width: 100%; margin-bottom: 5px; display: none;" onchange="trocarEstudo()">
+                    <option value="">Carregando estudos...</option>
+                </select>
+                <button onclick="criarNovoEstudo()" style="background-color: #f59e0b;">➕ Novo Estudo</button>
+                <button onclick="salvarEstado()" style="background-color: #10b981;">💾 Salvar Estudo Atual</button>
                 <button onclick="document.getElementById('file-import').click()">📂 Importar (.json)</button>
                 <input type="file" id="file-import" accept=".json" style="display:none" onchange="importarJSON(event)">
-                <button onclick="exportarJSON()" class="btn-secundary">💾 Exportar (.json)</button>
+                <button onclick="exportarJSON()" class="btn-secundary">💾 Exportar Atual (.json)</button>
+            </div>
+
+            <h2 style="margin-top: 20px;">Últimos 5 Estudos</h2>
+            <div id="lista-estudos-recentes" class="recent-studies-list">
+                <!-- Populado dinamicamente -->
             </div>
 
             <h2 style="margin-top: 20px;">Status da Validação</h2>
@@ -31,7 +41,7 @@
 
             <div class="acoes-sidebar">
                 <button id="btn-pdf" disabled>Gerar Relatório PDF</button>
-                <button id="btn-limpar" class="btn-danger" onclick="limparRascunho()">Limpar Sistema</button>
+                <button id="btn-limpar" class="btn-danger" onclick="excluirEstudoAtual()">🗑️ Excluir Estudo Atual</button>
             </div>
             <p id="status-save" class="status-save">Aguardando...</p>
         </aside>
@@ -81,6 +91,10 @@
                     </select>
                 </div>
                 <div class="form-group row">
+                    <div class="input-wrapper" style="flex-grow: 0.5;">
+                        <label>Número PRB:</label>
+                        <input type="text" id="prb" placeholder="Ex: PRB00123" oninput="salvarEstado()">
+                    </div>
                     <div class="input-wrapper">
                         <label>Título do Evento:</label>
                         <input type="text" id="titulo" placeholder="Ex: Falha de conectividade"
@@ -136,6 +150,10 @@
                         <label>Impacto no Negócio/Usuário:</label>
                         <input type="text" id="impacto" placeholder="Ex: Parada de produção" oninput="salvarEstado()">
                     </div>
+                    <div class="input-wrapper">
+                        <label>Custo / Perda (R$):</label>
+                        <input type="text" id="custo" placeholder="Ex: R$ 50.000,00" oninput="salvarEstado()">
+                    </div>
                 </div>
                 <div class="form-group row" style="margin-top: 15px;">
                     <div class="input-wrapper">
@@ -166,8 +184,11 @@
                 </div>
                 <div class="form-group row" style="margin-top: 15px;">
                     <div class="input-wrapper" style="width: 100%;">
-                        <label>Resumo Executivo do Incidente:</label>
-                        <textarea id="resumo-executivo" rows="3" placeholder="Descreva brevemente o que aconteceu, impacto e resolução..." oninput="salvarEstado()"></textarea>
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                            <label>Resumo Executivo do Incidente:</label>
+                            <button class="btn-small no-print" style="margin-bottom: 5px; background: #3b82f6; color: white; border: none; border-radius: 4px;" onclick="gerarResumoAutomatico()">⚡ Gerar Resumo Automático</button>
+                        </div>
+                        <textarea id="resumo-executivo" rows="4" placeholder="Descreva brevemente o que aconteceu, impacto e resolução..." oninput="salvarEstado()"></textarea>
                     </div>
                 </div>
             </section>
@@ -310,7 +331,10 @@
                         <option value="Em Andamento">Em Andamento</option>
                         <option value="Concluído">Concluído</option>
                     </select>
-                    <button onclick="adicionarAcao()">Incluir Ação</button>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="adicionarAcao()">Incluir Ação</button>
+                        <button onclick="exportarCSV()" style="background-color: #10b981;">📊 Exportar CSV</button>
+                    </div>
                 </div>
                 <table id="tabela-acoes" class="table-5w2h">
                     <thead>
