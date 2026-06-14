@@ -185,13 +185,19 @@ header h1 {
 }
 
 input,
-select {
+select,
+textarea {
     padding: 10px;
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     font-size: 0.95rem;
     outline: none;
     background-color: white;
+}
+
+textarea {
+    resize: vertical;
+    font-family: inherit;
 }
 
 select {
@@ -225,46 +231,137 @@ select {
     background-color: #ef4444;
 }
 
+/* --- Árvore de Causas (Org-Chart Flow) --- */
 .tree-container {
     margin-top: 15px;
+    overflow-x: auto;
+    padding: 20px;
+    background-color: #f1f5f9;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
 }
 
-.tree-node {
-    margin-left: 20px;
-    padding-left: 15px;
-    border-left: 2px solid #cbd5e1;
+.oc-tree {
+    display: flex;
+    justify-content: center;
+}
+
+.oc-tree ul {
+    padding-top: 20px; position: relative;
+    transition: all 0.5s;
+    display: flex;
+    padding-left: 0;
+}
+
+.oc-tree li {
+    float: left; text-align: center;
+    list-style-type: none;
     position: relative;
-    margin-top: 10px;
+    padding: 20px 5px 0 5px;
+    transition: all 0.5s;
 }
 
-.tree-node::before {
+/* Conectores */
+.oc-tree li::before, .oc-tree li::after{
     content: '';
-    position: absolute;
-    left: 0;
-    top: 15px;
-    width: 10px;
-    border-top: 2px solid #cbd5e1;
+    position: absolute; top: 0; right: 50%;
+    border-top: 2px solid #94a3b8;
+    width: 50%; height: 20px;
+}
+.oc-tree li::after{
+    right: auto; left: 50%;
+    border-left: 2px solid #94a3b8;
+}
+
+.oc-tree li:only-child::after, .oc-tree li:only-child::before {
+    display: none;
+}
+
+.oc-tree li:only-child{ padding-top: 0;}
+
+.oc-tree li:first-child::before, .oc-tree li:last-child::after{
+    border: 0 none;
+}
+.oc-tree li:last-child::before{
+    border-right: 2px solid #94a3b8;
+    border-radius: 0 5px 0 0;
+}
+.oc-tree li:first-child::after{
+    border-radius: 5px 0 0 0;
+}
+
+.oc-tree ul::before{
+    content: '';
+    position: absolute; top: 0; left: 50%;
+    border-left: 2px solid #94a3b8;
+    width: 0; height: 20px;
+}
+
+/* Setas */
+.oc-tree li > div {
+    position: relative;
+}
+.oc-tree ul::before {
+    /* Setas descendo */
+    border-left: 2px dashed #64748b;
 }
 
 .node-content {
-    display: flex;
+    border: 1px solid #cbd5e1;
+    padding: 10px 15px;
+    border-radius: 8px;
+    display: inline-flex;
+    flex-direction: column;
     align-items: center;
-    background: white;
-    padding: 8px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    width: 180px;
+    max-width: 180px;
+    background-color: white;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    text-align: center;
+    position: relative;
+}
+
+.node-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
 }
 
 .node-text {
-    flex-grow: 1;
-    font-weight: 500;
+    font-weight: bold;
+    color: #1e293b;
+    margin-bottom: 8px;
     cursor: pointer;
+    font-size: 0.95rem;
+    white-space: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    width: 100%;
 }
 
 .node-text:hover {
     color: #0284c7;
     text-decoration: underline;
+}
+
+.logic-tag {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.8);
+    color: #333;
+    margin-bottom: 5px;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+/* PDF adjustments for Org Chart */
+.pdf-mode .tree-container {
+    overflow: visible;
+    background: transparent;
+    justify-content: flex-start;
 }
 
 table {
@@ -342,6 +439,17 @@ th {
     min-height: 38px;
     display: inline-block;
     width: 100%;
+    white-space: pre-wrap; /* important for textareas */
+}
+
+.pdf-checkbox {
+    font-size: 0.95rem;
+    font-weight: bold;
+    padding: 8px;
+    border-radius: 4px;
+    display: inline-block;
+    background: #f1f5f9;
+    color: #0f172a;
 }
 
 /* --- Sistema de Abas --- */
@@ -403,27 +511,34 @@ th {
 
 /* Cores Específicas do Fluxograma */
 .tipo-evento {
-    background-color: #ffbf00 !important;
+    background-color: #ffbf00 !important; /* Âmbar */
 }
 
-/* Âmbar */
 .tipo-hipotese {
-    background-color: #fef08a !important;
+    background-color: #fef08a !important; /* Amarelo */
 }
 
-/* Amarelo */
 .tipo-validada {
-    background-color: #bbf7d0 !important;
+    background-color: #bbf7d0 !important; /* Verde Claro */
 }
 
-/* Verde Claro */
-.tipo-raiz {
-    background-color: #f87171 !important;
+.tipo-nao-validada {
+    background-color: #cbd5e1 !important; /* Cinza - Fim da linha */
+    color: #475569 !important;
+}
+
+.tipo-raiz-secundaria {
+    background-color: #fb923c !important; /* Laranja */
     color: white !important;
 }
 
-/* Vermelho */
+.tipo-raiz {
+    background-color: #f87171 !important; /* Vermelho */
+    color: white !important;
+}
 
+
+/* Badges da Legenda */
 .badge-evento {
     background-color: #ffbf00;
 }
@@ -436,9 +551,28 @@ th {
     background-color: #bbf7d0;
 }
 
+.badge-nao-validada {
+    background-color: #cbd5e1;
+    color: #475569;
+}
+
+.badge-raiz-secundaria {
+    background-color: #fb923c;
+    color: white;
+}
+
 .badge-raiz {
     background-color: #f87171;
     color: white;
+}
+
+/* Organização de botões dentro do nó */
+.node-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    margin-top: 5px;
 }
 
 /* --- 5 Porquês --- */
@@ -446,56 +580,293 @@ th {
     list-style: none;
     padding: 0;
     counter-reset: pq-counter;
+    position: relative;
+    margin-top: 15px;
 }
 
 .lista-porques li {
-    padding: 10px;
-    background: #f8fafc;
+    padding: 12px 15px;
+    background: white;
+    border: 1px solid #cbd5e1;
     border-left: 4px solid #0284c7;
-    margin-bottom: 8px;
+    border-radius: 6px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lista-porques li:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .lista-porques li::before {
     counter-increment: pq-counter;
-    content: counter(pq-counter) "º PQ: ";
-    font-weight: bold;
-    margin-right: 10px;
+    content: counter(pq-counter) "º PQ";
+    font-weight: 800;
+    background-color: #e0f2fe;
     color: #0284c7;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-right: 15px;
+    font-size: 0.85rem;
 }
 
-/* --- Ishikawa --- */
-.ishikawa-grid {
+/* Indicador de fluxo visual (Seta descendo) */
+.lista-porques li + li::after {
+    content: '↳';
+    position: absolute;
+    top: -24px;
+    left: -20px;
+    font-size: 1.5rem;
+    color: #94a3b8;
+    font-weight: bold;
+}
+
+.pq-text {
+    flex-grow: 1;
+    font-size: 0.95rem;
+    color: #1e293b;
+    font-weight: 500;
+}
+
+/* Escalonamento em escada (Staircase layout) */
+.lista-porques li:nth-child(2) { margin-left: 20px; }
+.lista-porques li:nth-child(3) { margin-left: 40px; }
+.lista-porques li:nth-child(4) { margin-left: 60px; }
+.lista-porques li:nth-child(5) { margin-left: 80px; }
+.lista-porques li:nth-child(6) { margin-left: 100px; }
+.lista-porques li:nth-child(n+7) { margin-left: 120px; }
+
+/* --- Timeline --- */
+.timeline-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0 0 0;
+    position: relative;
+}
+
+.timeline-list::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    width: 4px;
+    background: #cbd5e1;
+    border-radius: 2px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 15px;
+    padding-left: 50px;
+    display: flex;
+    align-items: center;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    background: #0284c7;
+    border: 3px solid white;
+    border-radius: 50%;
+    z-index: 1;
+    box-shadow: 0 0 0 2px #0284c7;
+}
+
+.timeline-content {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 10px 15px;
+    flex-grow: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.timeline-datetime {
+    font-weight: bold;
+    color: #0284c7;
+    margin-right: 15px;
+    white-space: nowrap;
+}
+
+.timeline-text {
+    flex-grow: 1;
+}
+
+/* --- Barreiras --- */
+.barreiras-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 15px;
-    margin-top: 15px;
+    margin-top: 20px;
+}
+
+.barreira-card {
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 12px;
+    background: #f8fafc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid #cbd5e1;
+}
+
+.barreira-card.barreira-funcionou {
+    border-left-color: #10b981; /* Verde */
+}
+
+.barreira-card.barreira-falhou {
+    border-left-color: #ef4444; /* Vermelho */
+}
+
+.barreira-card.barreira-inexistente {
+    border-left-color: #94a3b8; /* Cinza */
+}
+
+.barreira-info strong {
+    display: block;
+    font-size: 1.05rem;
+    color: #0f172a;
+    margin-bottom: 5px;
+}
+
+.barreira-info span {
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 500;
+}
+
+/* --- Fishbone / Ishikawa --- */
+.fishbone-diagram {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+    padding-bottom: 30px;
+}
+
+.fishbone-categories {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.fishbone-row {
+    display: flex;
+    justify-content: space-around;
+    position: relative;
+    z-index: 2;
+}
+
+.top-row {
+    margin-bottom: 20px;
+}
+
+.bottom-row {
+    margin-top: 20px;
+}
+
+.fishbone-spine {
+    height: 6px;
+    background: #0284c7;
+    width: 100%;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+.fishbone-head {
+    width: 200px;
+    margin-left: 20px;
+    z-index: 2;
+}
+
+.fishbone-head-box {
+    border: 2px solid #0284c7;
+    border-radius: 8px;
+    padding: 15px;
+    background: white;
+    text-align: center;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.fishbone-head-box::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-right: 20px solid #0284c7;
 }
 
 .ishikawa-box {
     border: 1px solid #cbd5e1;
     border-radius: 6px;
     padding: 10px;
-    background: #f1f5f9;
+    background: white;
+    width: 30%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: relative;
 }
 
 .ishikawa-box h5 {
     margin: 0 0 10px 0;
-    color: #334155;
+    background: #0284c7;
+    color: white;
     text-align: center;
-    border-bottom: 1px solid #cbd5e1;
-    padding-bottom: 5px;
+    padding: 6px;
+    border-radius: 4px;
 }
 
 .ishikawa-box ul {
     padding-left: 20px;
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    min-height: 40px;
 }
 
 .ishikawa-box li {
     margin-bottom: 5px;
+}
+
+/* Espinhas (Conectores) usando ::after */
+.branch-top::after, .branch-bottom::after {
+    content: '';
+    position: absolute;
+    width: 3px;
+    background-color: #94a3b8;
+    z-index: -1;
+}
+
+.branch-top::after {
+    height: 40px;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%) skewX(20deg);
+}
+
+.branch-bottom::after {
+    height: 40px;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%) skewX(-20deg);
 }
 
 /* --- Ocultar títulos das abas no modo normal, mostrar no PDF --- */
@@ -529,9 +900,9 @@ th {
     border-radius: 8px;
     padding: 12px;
     background: white;
-    width: calc(50% - 10px);
-    /* 2 fotos por linha */
-    min-width: 250px;
+    width: calc(25% - 15px);
+    /* 4 fotos por linha */
+    min-width: 180px;
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -541,7 +912,7 @@ th {
 
 .evidence-card img {
     width: 100%;
-    height: 220px;
+    height: 120px;
     object-fit: cover;
     border-radius: 6px;
     border: 1px solid #e2e8f0;
@@ -568,7 +939,7 @@ th {
 .pdf-mode .evidence-card {
     border-color: #e2e8f0;
     box-shadow: none;
-    width: calc(50% - 15px);
+    width: calc(25% - 15px);
 }
 
 /* --- Cabeçalho Corporativo --- */
@@ -632,6 +1003,68 @@ th {
     display: none !important;
 }
 
+/* --- Recent Studies List --- */
+.recent-studies-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.recent-study-item {
+    padding: 8px 10px;
+    background: #334155;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-left: 3px solid transparent;
+}
+
+.recent-study-item:hover {
+    background: #475569;
+}
+
+.recent-study-item.ativo {
+    border-left-color: #3b82f6;
+    background: #1e293b;
+    font-weight: bold;
+    color: #3b82f6;
+}
+
+/* --- Progress Bar Plan de Ação --- */
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 250px;
+}
+
+.progress-bar-bg {
+    flex-grow: 1;
+    height: 10px;
+    background-color: #e2e8f0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: #10b981;
+    transition: width 0.4s ease;
+}
+
+.progress-text {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #475569;
+    min-width: 95px;
+    text-align: right;
+}
+
 /* --- Tabela 5W2H Otimizada --- */
 .table-5w2h th,
 .table-5w2h td {
@@ -650,4 +1083,65 @@ th {
 
 .info-sub strong {
     color: #0284c7;
+}
+
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-align: center;
+    display: inline-block;
+}
+
+.status-todo {
+    background-color: #cbd5e1;
+    color: #334155;
+}
+
+.status-doing {
+    background-color: #fef08a;
+    color: #854d0e;
+}
+
+.status-done {
+    background-color: #bbf7d0;
+    color: #166534;
+}
+
+.linha-atrasada {
+    background-color: #fee2e2 !important; /* Vermelho claro */
+}
+
+.atrasado-alerta {
+    color: #ef4444;
+    font-weight: bold;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.cat-badge {
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+.cat-corretiva {
+    background-color: #ef4444;
+}
+
+.cat-preventiva {
+    background-color: #3b82f6;
+}
+
+.cat-detetiva {
+    background-color: #f59e0b;
+}
+
+.cat-melhoria {
+    background-color: #10b981;
 }

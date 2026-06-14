@@ -7,18 +7,28 @@
     <title>Plataforma de Análise RCA - Vale</title>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <script src="localforage.min.js"></script>
-    <script src="html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 
 <body>
     <div class="container">
         <aside class="sidebar no-print">
-            <h2>Gestão do Estudo</h2>
+            <h2>Gestão de Estudos (RCA)</h2>
             <div class="acoes-sidebar">
+                <select id="seletor-estudos" style="width: 100%; margin-bottom: 5px; display: none;" onchange="trocarEstudo()">
+                    <option value="">Carregando estudos...</option>
+                </select>
+                <button onclick="criarNovoEstudo()" style="background-color: #f59e0b;">➕ Novo Estudo</button>
+                <button onclick="salvarEstado()" style="background-color: #10b981;">💾 Salvar Estudo Atual</button>
                 <button onclick="document.getElementById('file-import').click()">📂 Importar (.json)</button>
                 <input type="file" id="file-import" accept=".json" style="display:none" onchange="importarJSON(event)">
-                <button onclick="exportarJSON()" class="btn-secundary">💾 Exportar (.json)</button>
+                <button onclick="exportarJSON()" class="btn-secundary">💾 Exportar Atual (.json)</button>
+            </div>
+
+            <h2 style="margin-top: 20px;">Últimos 5 Estudos</h2>
+            <div id="lista-estudos-recentes" class="recent-studies-list">
+                <!-- Populado dinamicamente -->
             </div>
 
             <h2 style="margin-top: 20px;">Status da Validação</h2>
@@ -31,7 +41,7 @@
 
             <div class="acoes-sidebar">
                 <button id="btn-pdf" disabled>Gerar Relatório PDF</button>
-                <button id="btn-limpar" class="btn-danger" onclick="limparRascunho()">Limpar Sistema</button>
+                <button id="btn-limpar" class="btn-danger" onclick="excluirEstudoAtual()">🗑️ Excluir Estudo Atual</button>
             </div>
             <p id="status-save" class="status-save">Aguardando...</p>
         </aside>
@@ -81,6 +91,10 @@
                     </select>
                 </div>
                 <div class="form-group row">
+                    <div class="input-wrapper" style="flex-grow: 0.5;">
+                        <label>Número PRB:</label>
+                        <input type="text" id="prb" placeholder="Ex: PRB00123" oninput="salvarEstado()">
+                    </div>
                     <div class="input-wrapper">
                         <label>Título do Evento:</label>
                         <input type="text" id="titulo" placeholder="Ex: Falha de conectividade"
@@ -123,6 +137,60 @@
                         <div id="risco-resultado" class="risk-badge">Não Avaliado</div>
                     </div>
                 </div>
+                <div class="form-group row" style="margin-top: 15px;">
+                    <div class="input-wrapper">
+                        <label>Serviço / Sistema Afetado:</label>
+                        <input type="text" id="sistema" placeholder="Ex: Servidor de E-mail" oninput="salvarEstado()">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Downtime (Duração):</label>
+                        <input type="text" id="downtime" placeholder="Ex: 2 horas" oninput="salvarEstado()">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Impacto no Negócio/Usuário:</label>
+                        <input type="text" id="impacto" placeholder="Ex: Parada de produção" oninput="salvarEstado()">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Custo / Perda (R$):</label>
+                        <input type="text" id="custo" placeholder="Ex: R$ 50.000,00" oninput="salvarEstado()">
+                    </div>
+                </div>
+                <div class="form-group row" style="margin-top: 15px;">
+                    <div class="input-wrapper">
+                        <label title="Time to Detect">Tempo de Detecção (TTD):</label>
+                        <input type="text" id="ttd" placeholder="Ex: 15 minutos" oninput="salvarEstado()">
+                    </div>
+                    <div class="input-wrapper">
+                        <label title="Time to Resolve">Tempo de Resolução (TTR):</label>
+                        <input type="text" id="ttr" placeholder="Ex: 1h 45m" oninput="salvarEstado()">
+                    </div>
+                    <div class="input-wrapper">
+                        <label>Classificação Principal:</label>
+                        <select id="classificacao" onchange="salvarEstado()">
+                            <option value="">Selecione...</option>
+                            <option value="Software/Bug">Software / Bug</option>
+                            <option value="Hardware">Hardware / Equipamento</option>
+                            <option value="Rede/Conectividade">Rede / Conectividade</option>
+                            <option value="Processo/Humano">Erro Humano / Processo</option>
+                            <option value="Fornecedor/Terceiro">Fornecedor / Terceiro</option>
+                        </select>
+                    </div>
+                    <div class="input-wrapper" style="justify-content: center;">
+                        <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="violacao-sla" onchange="salvarEstado()" style="width: auto;">
+                            <strong>Violação de SLA / SLO Ocorreu</strong>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group row" style="margin-top: 15px;">
+                    <div class="input-wrapper" style="width: 100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                            <label>Resumo Executivo do Incidente:</label>
+                            <button class="btn-small no-print" style="margin-bottom: 5px; background: #3b82f6; color: white; border: none; border-radius: 4px;" onclick="gerarResumoAutomatico()">⚡ Gerar Resumo Automático</button>
+                        </div>
+                        <textarea id="resumo-executivo" rows="4" placeholder="Descreva brevemente o que aconteceu, impacto e resolução..." oninput="salvarEstado()"></textarea>
+                    </div>
+                </div>
             </section>
 
             <section class="card" id="secao-metodologias">
@@ -133,22 +201,22 @@
                     <button class="tab-btn active" onclick="abrirAba(event, 'aba-arvore')">Árvore de Causas</button>
                     <button class="tab-btn" onclick="abrirAba(event, 'aba-5pq')">5 Porquês</button>
                     <button class="tab-btn" onclick="abrirAba(event, 'aba-ishikawa')">Ishikawa</button>
+                    <button class="tab-btn" onclick="abrirAba(event, 'aba-barreiras')">Barreiras</button>
+                    <button class="tab-btn" onclick="abrirAba(event, 'aba-timeline')">Timeline</button>
                 </div>
                 <div id="aba-arvore" class="tab-content" style="display: block;">
                     <h4 class="metodologia-titulo">▶ Árvore de Causas</h4>
                     <div class="form-group row no-print">
-                        <select id="tipo-novo-no" class="tipo-select">
-                            <option value="evento">🟧 Evento (Âmbar)</option>
-                            <option value="hipotese">🟨 Hipótese (Amarelo)</option>
-                            <option value="validada">🟩 Hip. Validada (Verde Claro)</option>
-                            <option value="raiz">🟥 Causa Raiz (Vermelho)</option>
-                        </select>
-                        <input type="text" id="nova-causa-topo" placeholder="Descreva o nó principal...">
-                        <button onclick="adicionarCausaTopo()">Adicionar Nó</button>
+                        <input type="text" id="nova-causa-topo" placeholder="Descreva o Evento Topo (Problema)...">
+                        <button onclick="adicionarCausaTopo()">Adicionar Evento Inicial</button>
                     </div>
-                    <div class="legenda-cores no-print">
-                        <span class="badge-evento">Evento</span><span class="badge-hipotese">Hipótese</span>
-                        <span class="badge-validada">Hip. Validada</span><span class="badge-raiz">Causa Raiz</span>
+                    <div class="legenda-cores no-print" style="flex-wrap: wrap;">
+                        <span class="badge-evento">Evento</span>
+                        <span class="badge-hipotese">Hipótese</span>
+                        <span class="badge-validada">Hip. Validada</span>
+                        <span class="badge-nao-validada">Hip. Não Validada</span>
+                        <span class="badge-raiz-secundaria">Causa Secundária</span>
+                        <span class="badge-raiz">Causa Raiz Principal</span>
                     </div>
                     <div id="arvore-container" class="tree-container"></div>
                 </div>
@@ -162,43 +230,84 @@
                 </div>
                 <div id="aba-ishikawa" class="tab-content" style="display: none;">
                     <h4 class="metodologia-titulo">▶ Diagrama de Ishikawa (6Ms)</h4>
-                    <div class="ishikawa-grid">
-                        <div class="ishikawa-box">
-                            <h5>Método</h5><input type="text" id="ish-metodo" class="no-print"
-                                onkeypress="addIshikawa(event, 'metodo')">
-                            <ul id="lista-metodo"></ul>
+                    <div class="fishbone-diagram">
+                        <div class="fishbone-categories">
+                            <div class="fishbone-row top-row">
+                                <div class="ishikawa-box branch-top">
+                                    <h5>Método</h5><input type="text" id="ish-metodo" class="no-print" onkeypress="addIshikawa(event, 'metodo')">
+                                    <ul id="lista-metodo"></ul>
+                                </div>
+                                <div class="ishikawa-box branch-top">
+                                    <h5>Máquina</h5><input type="text" id="ish-maquina" class="no-print" onkeypress="addIshikawa(event, 'maquina')">
+                                    <ul id="lista-maquina"></ul>
+                                </div>
+                                <div class="ishikawa-box branch-top">
+                                    <h5>Material</h5><input type="text" id="ish-material" class="no-print" onkeypress="addIshikawa(event, 'material')">
+                                    <ul id="lista-material"></ul>
+                                </div>
+                            </div>
+
+                            <div class="fishbone-spine"></div>
+
+                            <div class="fishbone-row bottom-row">
+                                <div class="ishikawa-box branch-bottom">
+                                    <h5>Mão de Obra</h5><input type="text" id="ish-mao" class="no-print" onkeypress="addIshikawa(event, 'mao')">
+                                    <ul id="lista-mao"></ul>
+                                </div>
+                                <div class="ishikawa-box branch-bottom">
+                                    <h5>Medida</h5><input type="text" id="ish-medida" class="no-print" onkeypress="addIshikawa(event, 'medida')">
+                                    <ul id="lista-medida"></ul>
+                                </div>
+                                <div class="ishikawa-box branch-bottom">
+                                    <h5>Meio Ambiente</h5><input type="text" id="ish-meio" class="no-print" onkeypress="addIshikawa(event, 'meio')">
+                                    <ul id="lista-meio"></ul>
+                                </div>
+                            </div>
                         </div>
-                        <div class="ishikawa-box">
-                            <h5>Máquina</h5><input type="text" id="ish-maquina" class="no-print"
-                                onkeypress="addIshikawa(event, 'maquina')">
-                            <ul id="lista-maquina"></ul>
-                        </div>
-                        <div class="ishikawa-box">
-                            <h5>Material</h5><input type="text" id="ish-material" class="no-print"
-                                onkeypress="addIshikawa(event, 'material')">
-                            <ul id="lista-material"></ul>
-                        </div>
-                        <div class="ishikawa-box">
-                            <h5>Mão de Obra</h5><input type="text" id="ish-mao" class="no-print"
-                                onkeypress="addIshikawa(event, 'mao')">
-                            <ul id="lista-mao"></ul>
-                        </div>
-                        <div class="ishikawa-box">
-                            <h5>Medida</h5><input type="text" id="ish-medida" class="no-print"
-                                onkeypress="addIshikawa(event, 'medida')">
-                            <ul id="lista-medida"></ul>
-                        </div>
-                        <div class="ishikawa-box">
-                            <h5>Meio Ambiente</h5><input type="text" id="ish-meio" class="no-print"
-                                onkeypress="addIshikawa(event, 'meio')">
-                            <ul id="lista-meio"></ul>
+                        <div class="fishbone-head">
+                            <div class="fishbone-head-box">
+                                <strong style="display: block; font-size: 0.8em; color: #475569; margin-bottom: 5px;">EFEITO (PROBLEMA):</strong>
+                                <span id="fishbone-efeito">Nenhum evento preenchido</span>
+                            </div>
                         </div>
                     </div>
+                </div>
+                <div id="aba-barreiras" class="tab-content" style="display: none;">
+                    <h4 class="metodologia-titulo">▶ Análise de Barreiras</h4>
+                    <p style="font-size: 0.9rem; color: #475569;">Identifique quais controles de proteção, detecção ou mitigação existiam e como se comportaram no incidente.</p>
+                    <div class="form-group row no-print">
+                        <input type="text" id="barreira-nome" placeholder="Nome da Barreira (Ex: Alerta Zabbix, Firewall, Code Review)" style="flex-grow: 2;">
+                        <select id="barreira-status">
+                            <option value="Funcionou">🛡️ Funcionou (Mitigou)</option>
+                            <option value="Falhou">⚠️ Falhou</option>
+                            <option value="Inexistente">❌ Inexistente</option>
+                        </select>
+                        <button onclick="adicionarBarreira()">Adicionar Barreira</button>
+                    </div>
+                    <div id="lista-barreiras" class="barreiras-grid"></div>
+                </div>
+                <div id="aba-timeline" class="tab-content" style="display: none;">
+                    <h4 class="metodologia-titulo">▶ Cronologia do Incidente (Timeline)</h4>
+                    <div class="form-group row no-print">
+                        <input type="date" id="timeline-data">
+                        <input type="time" id="timeline-hora">
+                        <input type="text" id="timeline-evento" placeholder="Descrição do evento..." style="flex-grow: 2;">
+                        <button onclick="adicionarTimeline()">Adicionar Evento</button>
+                    </div>
+                    <ul id="lista-timeline" class="timeline-list"></ul>
                 </div>
             </section>
 
             <section class="card">
-                <h3>3. Plano de Ação Estruturado (5W2H)</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>3. Plano de Ação Estruturado (5W2H)</h3>
+                    <div class="progress-container">
+                        <span class="progress-text" id="progresso-texto">0% Concluído</span>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill" id="progresso-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="form-group row no-print">
                     <input type="text" id="acao-oque" placeholder="What: O que será feito?">
                     <input type="text" id="acao-porque" placeholder="Why: Por que? (Justificativa)">
@@ -211,7 +320,21 @@
                 <div class="form-group row no-print">
                     <input type="text" id="acao-como" placeholder="How: Como será executado?">
                     <input type="text" id="acao-quanto" placeholder="How Much: Quanto custa/recursos?">
-                    <button onclick="adicionarAcao()">Incluir Ação</button>
+                    <select id="acao-categoria">
+                        <option value="Corretiva">Corretiva</option>
+                        <option value="Preventiva">Preventiva</option>
+                        <option value="Detetiva">Detetiva</option>
+                        <option value="Melhoria">Melhoria</option>
+                    </select>
+                    <select id="acao-status">
+                        <option value="A Fazer">A Fazer</option>
+                        <option value="Em Andamento">Em Andamento</option>
+                        <option value="Concluído">Concluído</option>
+                    </select>
+                    <div style="display: flex; gap: 5px;">
+                        <button onclick="adicionarAcao()">Incluir Ação</button>
+                        <button onclick="exportarCSV()" style="background-color: #10b981;">📊 Exportar CSV</button>
+                    </div>
                 </div>
                 <table id="tabela-acoes" class="table-5w2h">
                     <thead>
@@ -219,7 +342,8 @@
                             <th>Ação & Justificativa <br><small>(What / Why)</small></th>
                             <th>Responsável <br><small>(Who)</small></th>
                             <th>Local & Prazo <br><small>(Where / When)</small></th>
-                            <th>Procedimento & Custo <br><small>(How / How Much)</small></th>
+                            <th>Procedimento & Categoria <br><small>(How / Cat.)</small></th>
+                            <th>Status</th>
                             <th class="no-print">Ação</th>
                         </tr>
                     </thead>
@@ -250,6 +374,20 @@
                     <button onclick="adicionarParticipante()">Adicionar Participante</button>
                 </div>
                 <ul id="lista-presenca" class="tags-list"></ul>
+            </section>
+
+            <section class="card" style="page-break-before: auto;">
+                <h3>6. Postmortem (Lições Aprendidas)</h3>
+                <div class="form-group row">
+                    <div class="input-wrapper" style="width: 100%;">
+                        <label>O que funcionou bem?</label>
+                        <textarea id="pm-funcionou" rows="4" placeholder="Descreva os pontos positivos, o que mitigou o impacto..." oninput="salvarEstado()"></textarea>
+                    </div>
+                    <div class="input-wrapper" style="width: 100%;">
+                        <label>O que deu errado?</label>
+                        <textarea id="pm-falhou" rows="4" placeholder="Descreva as falhas, atrasos ou problemas adicionais..." oninput="salvarEstado()"></textarea>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
